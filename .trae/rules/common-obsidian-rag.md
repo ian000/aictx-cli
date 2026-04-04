@@ -1,11 +1,11 @@
 ---
 alwaysApply: false
-description: 任何在 `documents/` 目录下创建、重构或修改的 Markdown (`.md`) 文件
+description: 任何项目中创建、重构或修改的架构规范或业务要求 Markdown (`.md`) 文件
 ---
-# AI 文档写作规范 (Obsidian & RAG 优化)
+# Obsidian RAG 文档规范 (Obsidian RAG Standard)
 
 > **适用范围**: 
-> 任何在 `documents/` 目录下创建、重构或修改的 Markdown (`.md`) 文件。
+> 任何项目中创建、重构或修改的架构规范或业务要求 Markdown (`.md`) 文件。
 
 ## 1. 强制 YAML Frontmatter
 所有文档必须包含以下元数据头部，以优化 RAG 检索权重：
