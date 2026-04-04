@@ -86,8 +86,8 @@ roles:
 ## 🎯 Phase 5: CI/CD 与开源分发 (Release & Distribution)
 *目标：完成项目的打磨，推向开源社区。*
 
-- [ ] **P5.1 完善测试覆盖率**
-  - [ ] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
+- [x] **P5.1 完善测试覆盖率**
+  - [x] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
 - [x] **P5.2 NPM 打包与发布**
   - [x] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
   - [x] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
