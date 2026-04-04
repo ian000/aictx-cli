@@ -47,10 +47,6 @@ roles:
 - [x] **P2.3 `config` 解析引擎实现**
   - [x] 编写 ConfigParser，读取并校验项目目录下的 `aictx.json`。
   - [x] 支持本地配置与默认缺省配置的 Merge。
-- [ ] **P2.4 多语言支持 (i18n)**
-  - [ ] 搭建 `src/locales` 轻量级字典 (中/英)。
-  - [ ] 在 `init` 流程增加语言选择向导。
-  - [ ] 重构所有 CLI 命令以接入多语言字典。
 
 ---
 
@@ -90,11 +86,11 @@ roles:
 ## 🎯 Phase 5: CI/CD 与开源分发 (Release & Distribution)
 *目标：完成项目的打磨，推向开源社区。*
 
-- [x] **P5.1 完善测试覆盖率**
-  - [x] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
-- [x] **P5.2 NPM 打包与发布**
-  - [x] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
-  - [x] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
-- [x] **P5.3 开源布道支持**
-  - [x] 补充具体的 Rule 范例 (Examples 目录)。
-  - [x] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。
+- [ ] **P5.1 完善测试覆盖率**
+  - [ ] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
+- [ ] **P5.2 NPM 打包与发布**
+  - [ ] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
+  - [ ] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
+- [ ] **P5.3 开源布道支持**
+  - [ ] 补充具体的 Rule 范例 (Examples 目录)。
+  - [ ] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。

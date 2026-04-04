@@ -4,6 +4,7 @@ import path from 'path';
 export interface AictxConfig {
   $schema?: string;
   version: string;
+  lang?: 'en' | 'zh';
   repository: string;
   ides: string[];
   tags: string[];

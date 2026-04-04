@@ -1,4 +1,9 @@
 ---
+description: aictx-产品需求文档(PRD)
+globs: *
+---
+
+---
 tags:
   - aictx
   - PRD
@@ -36,7 +41,6 @@ roles:
 本期 MVP 专注于构建 CLI 核心管道逻辑，**暂不涉及**可视化 SaaS 与云端 Rule-Hub，但在终端 UI 层面必须具备极强的“价值感知力”。
 
 ### 3.1 配置解析模块 (Config Parser)
-- **多语言支持 (i18n)**: 支持全局 CLI 的语言切换，默认英文 (`en`)，支持简体中文 (`zh`)。语言偏好持久化存储在配置中。
 - 识别项目根目录的配置声明 (如 `package.json` 中的 `aictx` 字段，或独立的 `aictx.json`)。
 - 解析该项目声明依赖的中央规则列表 (BaseRules & DomainRules) 及其版本/路径。
 

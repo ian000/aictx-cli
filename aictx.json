@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/aictx/schema.json",
+  "version": "1.0",
+  "repository": "./documents",
+  "ides": [
+    "trae",
+    "cursor",
+    "claude",
+    "windsurf"
+  ],
+  "tags": [
+    "aictx",
+    "common",
+    "global"
+  ],
+  "overrides": {}
+}

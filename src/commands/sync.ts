@@ -5,6 +5,7 @@ import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../c
 import { consola } from 'consola';
 import pc from 'picocolors';
 import path from 'path';
+import { t } from '../locales/index.js';
 
 const adapters: Record<string, any> = {
   trae: new TraeAdapter(),
@@ -14,7 +15,7 @@ const adapters: Record<string, any> = {
 };
 
 export const syncCommand = (cli: any) => {
-  cli.command('sync', '同步并组装 AI 上下文规则')
+  cli.command('sync', 'Sync and assemble AI context rules')
     .action(async () => {
       try {
         const parser = new ConfigParser();
@@ -24,49 +25,50 @@ export const syncCommand = (cli: any) => {
         // 确保 cacheDir 存在于项目根目录下
         const cacheDir = path.join(cwd, '.aictx-cache');
         
+        consola.start(t('sync.start'));
+        
         // 1. Fetch
+        if (config.repository === './' || config.repository === '.' || !config.repository.startsWith('http') && !config.repository.startsWith('git@')) {
+           consola.info(t('sync.fetch.local'));
+        } else {
+           consola.info(t('sync.fetch.remote'));
+        }
         await fetchRules(config.repository, cacheDir);
 
         // 2. Assemble
-        consola.start('正在动态组装并过滤上下文 (Context Assembler)...');
+        consola.start(t('sync.assemble'));
         const result = await assembleRules(cacheDir, config.tags);
         
         if (result.rules.length === 0) {
-          consola.warn('未找到匹配的规则，可能是 Tags 过滤过严，或者规则仓库为空。');
+          consola.warn('No rules matched. Check tags or empty repo.');
           return;
         }
 
-        consola.success(`组装完成: 命中 ${result.stats.matchedRules} 个规则模块`);
-
         if (result.stats.matchedTokens > 12000) {
           consola.warn(
-            pc.yellow(`⚠️ 当前上下文约 ${result.stats.matchedTokens} Tokens，存在 Context Bloat 风险，建议裁剪 Tags！`)
+            pc.yellow(t('sync.warning.bloat'))
           );
         }
 
         // 3. Inject
-        consola.start(`正在通过适配器注入至目标 IDE: ${config.ides.join(', ')}...`);
+        consola.start(t('sync.inject'));
         for (const ide of config.ides) {
           const adapter = adapters[ide];
           if (adapter) {
             await adapter.inject(cwd, result);
-            consola.success(`已成功注入至 ${ide} 环境。`);
-          } else {
-            consola.warn(`未找到对应 ${ide} 的注入适配器。`);
           }
         }
 
         // 4. Value Dashboard (Value Perception)
         console.log('\n======================================================================');
-        console.log(`${pc.green('✨ 同步与组装完成！')}\n`);
-        console.log(`🛡️ 拦截无关规则数: ${pc.yellow(result.stats.ignoredRules.toString())} 份`);
-        console.log(`💰 节约 Token 预估: ${pc.yellow('~' + result.stats.ignoredTokens.toString())} Tokens`);
-        console.log(`✅ 实际注入 Token数: ${pc.cyan('~' + result.stats.matchedTokens.toString())} Tokens`);
-        console.log(`🔗 核心规范版本: ${pc.cyan('v1.0.0')}`);
+        console.log(`${pc.green(`✨ ${t('sync.dashboard.title')}`)}\n`);
+        console.log(`🛡️ ${t('sync.dashboard.ignored')}: ${pc.yellow(result.stats.ignoredRules.toString())}`);
+        console.log(`💰 ${t('sync.dashboard.tokens')} (Saved): ${pc.yellow('~' + result.stats.ignoredTokens.toString())}`);
+        console.log(`✅ ${t('sync.dashboard.tokens')} (Injected): ${pc.cyan('~' + result.stats.matchedTokens.toString())}`);
         console.log('======================================================================\n');
 
       } catch (error: any) {
-        consola.error(pc.red(`❌ 同步失败: ${error.message}`));
+        consola.error(pc.red(t('common.error', error.message)));
         process.exit(1);
       }
     });

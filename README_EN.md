@@ -55,6 +55,8 @@ By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit k
   Provides a core metrics dashboard to clearly monitor the coverage and penetration of your team's AI conventions.
 - 🚀 **Minimal Integration, Zero Intrusion**
   No changes to existing business code required. Equip your project with AI armor using just a single command.
+- 🌐 **Built-in i18n (English/Chinese)**
+  Default English output with seamless switching to Simplified Chinese during initialization. Perfectly fits global teams.
 
 ## 🚀 Quick Start
 

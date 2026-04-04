@@ -7,6 +7,7 @@ import { syncCommand } from '../commands/sync.js';
 import { resolveCommand } from '../commands/resolve.js';
 import { doctorCommand } from '../commands/doctor.js';
 import { infoCommand } from '../commands/info.js';
+import { initI18n } from '../locales/index.js';
 
 // 强制设置 Node.js 在控制台输出的默认编码为 UTF-8
 if (process.stdout.setDefaultEncoding) {
@@ -28,9 +29,12 @@ infoCommand(cli as any);
 cli.help();
 cli.version('1.0.0');
 
-try {
-  cli.parse();
-} catch (error: any) {
-  consola.error(error.message);
-  process.exit(1);
-}
+(async () => {
+  await initI18n();
+  try {
+    cli.parse();
+  } catch (error: any) {
+    consola.error(error.message);
+    process.exit(1);
+  }
+})();

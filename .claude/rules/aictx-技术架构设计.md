@@ -17,7 +17,6 @@ roles:
 - **开发语言**: `TypeScript` (强类型，Node 生态契合度最高)。
 - **CLI 框架**: `cac` (极轻量级，性能远优于 commander，适合 DevTool)。
 - **交互与 UI**: `@clack/prompts` (无感知、现代化的终端交互组件) + `picocolors` (终端着色) + `consola` (日志分级)。
-- **国际化 (i18n)**: 自建轻量级多语言字典 (`src/locales`)，支持英文 (`en`) 与中文 (`zh`)。通过读取全局配置或环境变量，将终端文案统一映射，提升全球化体验。
 - **文件与解析**: 
   - `fs-extra` (增强型文件系统操作)。
   - `gray-matter` (高效解析 Markdown 的 YAML Frontmatter)。
