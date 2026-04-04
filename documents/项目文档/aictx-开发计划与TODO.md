@@ -61,10 +61,10 @@ roles:
 - [x] **P3.3 规则组装引擎 (Context Assembler)**
   - [x] 根据当前项目的业务标签，动态过滤和合并缓存中的 Rules。
   - [x] 实现 `tiktoken` 估算器，实时计算合并后文本的 Token 消耗，并在超过 12K 时输出黄色警告。
-- [ ] **P3.4 跨 IDE 适配与注入器 (Injector)**
-  - [ ] 实现 TraeAdapter：写入 `.trae/rules/`。
-  - [ ] 实现 CursorAdapter：写入 `.cursor/rules/`。
-  - [ ] 根据 `init` 时用户的选择，执行并行写入。
+- [x] **P3.4 跨 IDE 适配与注入器 (Injector)**
+  - [x] 实现 TraeAdapter：写入 `.trae/rules/`。
+  - [x] 实现 CursorAdapter：写入 `.cursor/rules/`。
+  - [x] 根据 `init` 时用户的选择，执行并行写入。
 
 ---
 
