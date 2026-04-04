@@ -1,0 +1,32 @@
+{
+  "name": "aictx",
+  "version": "1.0.0",
+  "description": "Context as Code (CaC) CLI for AI-Assisted Engineering",
+  "type": "module",
+  "bin": {
+    "aictx": "./dist/aictx.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node ./dist/aictx.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@clack/prompts": "^1.2.0",
+    "cac": "^7.0.0",
+    "consola": "^3.4.2",
+    "fs-extra": "^11.3.4",
+    "gray-matter": "^4.0.3",
+    "picocolors": "^1.1.1",
+    "tiktoken": "^1.0.22"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.5.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2"
+  }
+}
