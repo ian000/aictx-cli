@@ -71,9 +71,9 @@ roles:
 ## 🎯 Phase 4: 诊断、消解与价值展示 (Doctor, Resolve & Info)
 *目标：提供高级特性，解决规则冲突，并向团队直观展示 aictx 的降本增效价值。*
 
-- [ ] **P4.1 冲突消解引擎 (`resolve`)**
-  - [ ] 扫描组装后的 Rules，比对 `entities` 和 `tags` 的交集。
-  - [ ] 若发现重叠，利用 `@clack/prompts` 在终端弹出版本比对视图，引导开发者选择优先级。
+- [x] **P4.1 冲突消解引擎 (`resolve`)**
+  - [x] 扫描组装后的 Rules，比对 `entities` 和 `tags` 的交集。
+  - [x] 若发现重叠，利用 `@clack/prompts` 在终端弹出版本比对视图，引导开发者选择优先级。
 - [ ] **P4.2 本地漂移诊断 (`doctor`)**
   - [ ] 校验 `.aictx-cache` 中的 Hash 值与当前 IDE 中注入的规则文件。
   - [ ] 若被本地开发者篡改，提示修复或覆盖。
