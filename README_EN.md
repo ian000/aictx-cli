@@ -39,6 +39,8 @@ aictx introduces the **Context as Code** philosophy, embedding rules directly in
   Automatically fetch, assemble, and inject the latest AI context rules into your project. Supports custom RAG knowledge bases on demand.
 - 🛡️ **Local Health Diagnosis (Doctor)**
   Intelligently diagnose the health of local rules and token consumption levels, providing early warnings for context "pollution" and overload risks.
+- ⚖️ **Conflict Resolution (Resolve)**
+  Deeply scan business boundaries and context overlaps, interactively guiding the team to resolve rule conflicts and ensure SSOT (Single Source of Truth).
 - 📊 **Visual Data Dashboard (Info)**
   Provides a core metrics dashboard to clearly monitor the coverage and penetration of your team's AI conventions.
 - 🚀 **Minimal Integration, Zero Intrusion**
@@ -77,6 +79,7 @@ aictx sync
 | `aictx init` | Initialize aictx configuration | Integrate CaC into a new project |
 | `aictx sync` | Sync and assemble AI context rules | Get the latest team architecture conventions |
 | `aictx doctor` | Diagnose local rules & token health | Troubleshoot AI context "pollution" or overload |
+| `aictx resolve`| Interactively resolve context conflicts | When multiple rules describe the same business boundary |
 | `aictx info` | Display aictx core metrics dashboard | Gain insights into team convention adoption |
 
 > Run `aictx <command> --help` for detailed usage of any command.
@@ -86,7 +89,7 @@ aictx sync
 aictx aims to become the "Kubernetes" of the AI-Assisted Engineering era. Core evolution directions include:
 
 - [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
-  - Core command scaffold (`init`, `sync`, `doctor`, `info`)
+  - Core command scaffold (`init`, `sync`, `doctor`, `resolve`, `info`)
   - Cross-platform compatible builds
 - [ ] **Phase 2: Rule Parser & Assembler Engine**
   - Support multi-source rule fetching (Git, Local, HTTP)

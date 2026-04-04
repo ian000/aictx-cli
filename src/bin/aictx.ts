@@ -4,6 +4,7 @@ import { consola } from 'consola';
 import pc from 'picocolors';
 import { initCommand } from '../commands/init.js';
 import { syncCommand } from '../commands/sync.js';
+import { resolveCommand } from '../commands/resolve.js';
 
 const cli = cac('aictx');
 
@@ -14,6 +15,10 @@ cli
 cli
   .command('sync', 'Fetch, assemble and inject AI context rules')
   .action(syncCommand);
+
+cli
+  .command('resolve', '交互式解决业务上下文冲突')
+  .action(() => resolveCommand(cli as any));
 
 cli
   .command('doctor', 'Diagnose local rules and token health')
