@@ -53,14 +53,14 @@ roles:
 ## 🎯 Phase 3: 规则拉取与组装核心 (Fetch & Assemble Engine)
 *目标：实现 `sync` 命令的血肉，完成真正的 Context as Code 数据流转。*
 
-- [ ] **P3.1 规则拉取引擎 (Fetcher)**
-  - [ ] 实现 LocalFetcher：从本地文件系统读取 Markdown 规则。
-  - [ ] 实现 GitFetcher：从远程 Meta-Repo 拉取特定版本的规则文件至 `~/.aictx-cache`。
-- [ ] **P3.2 YAML Frontmatter 解析器**
-  - [ ] 集成 `gray-matter`，提取 Markdown 头部的 `tags`, `entities`, `roles` 等元数据。
-- [ ] **P3.3 规则组装引擎 (Context Assembler)**
-  - [ ] 根据当前项目的业务标签，动态过滤和合并缓存中的 Rules。
-  - [ ] 实现 `tiktoken` 估算器，实时计算合并后文本的 Token 消耗，并在超过 12K 时输出黄色警告。
+- [x] **P3.1 规则拉取引擎 (Fetcher)**
+  - [x] 实现 LocalFetcher：从本地文件系统读取 Markdown 规则。
+  - [x] 实现 GitFetcher：从远程 Meta-Repo 拉取特定版本的规则文件至 `~/.aictx-cache`。
+- [x] **P3.2 YAML Frontmatter 解析器**
+  - [x] 集成 `gray-matter`，提取 Markdown 头部的 `tags`, `entities`, `roles` 等元数据。
+- [x] **P3.3 规则组装引擎 (Context Assembler)**
+  - [x] 根据当前项目的业务标签，动态过滤和合并缓存中的 Rules。
+  - [x] 实现 `tiktoken` 估算器，实时计算合并后文本的 Token 消耗，并在超过 12K 时输出黄色警告。
 - [ ] **P3.4 跨 IDE 适配与注入器 (Injector)**
   - [ ] 实现 TraeAdapter：写入 `.trae/rules/`。
   - [ ] 实现 CursorAdapter：写入 `.cursor/rules/`。
