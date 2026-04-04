@@ -8,17 +8,10 @@ import { resolveCommand } from '../commands/resolve.js';
 
 const cli = cac('aictx');
 
-cli
-  .command('init', 'Initialize aictx configuration')
-  .action(initCommand);
-
-cli
-  .command('sync', 'Fetch, assemble and inject AI context rules')
-  .action(syncCommand);
-
-cli
-  .command('resolve', '交互式解决业务上下文冲突')
-  .action(() => resolveCommand(cli as any));
+// 注册命令
+initCommand(cli as any);
+syncCommand(cli as any);
+resolveCommand(cli as any);
 
 cli
   .command('doctor', 'Diagnose local rules and token health')

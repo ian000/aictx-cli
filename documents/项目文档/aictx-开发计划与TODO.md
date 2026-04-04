@@ -37,16 +37,16 @@ roles:
 ## 🎯 Phase 2: 配置解析与交互模块 (Configuration & CLI UX)
 *目标：让 CLI 能够与开发者进行优雅的终端交互，并正确生成和解析 `.aictx` 配置文件。*
 
-- [ ] **P2.1 优雅终端交互基建**
-  - [ ] 集成 `@clack/prompts`，封装终端问答向导基类 (Spinner, Select, Text)。
-- [ ] **P2.2 `init` 核心流程实现**
-  - [ ] 交互式询问用户所使用的 IDE 类型 (Trae, Cursor, Antigravity, Claude Code 等，支持多选)。
-  - [ ] 询问并确认团队的远程 Meta-Repo 规则仓库地址。
-  - [ ] 在项目根目录生成标准的 `aictx.json` 配置文件。
-  - [ ] 生成基础的本地覆写文件 `.aiignore`。
-- [ ] **P2.3 `config` 解析引擎实现**
-  - [ ] 编写 ConfigParser，读取并校验项目目录下的 `aictx.json`。
-  - [ ] 支持本地配置与默认缺省配置的 Merge。
+- [x] **P2.1 优雅终端交互基建**
+  - [x] 集成 `@clack/prompts`，封装终端问答向导基类 (Spinner, Select, Text)。
+- [x] **P2.2 `init` 核心流程实现**
+  - [x] 交互式询问用户所使用的 IDE 类型 (Trae, Cursor, Antigravity, Claude Code 等，支持多选)。
+  - [x] 询问并确认团队的远程 Meta-Repo 规则仓库地址。
+  - [x] 在项目根目录生成标准的 `aictx.json` 配置文件。
+  - [x] 生成基础的本地覆写文件 `.aiignore`。
+- [x] **P2.3 `config` 解析引擎实现**
+  - [x] 编写 ConfigParser，读取并校验项目目录下的 `aictx.json`。
+  - [x] 支持本地配置与默认缺省配置的 Merge。
 
 ---
 

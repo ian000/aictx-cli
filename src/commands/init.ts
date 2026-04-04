@@ -1,56 +1,66 @@
-import * as p from '@clack/prompts';
-import { saveConfig, AictxConfig, TargetIDE } from '../config/index.js';
+import { defineCommand } from 'cac';
+import { consola } from 'consola';
+import fs from 'fs-extra';
+import path from 'path';
 import pc from 'picocolors';
+import { cliUX } from '../utils/cli-ux.js';
 
-export async function initCommand() {
-  console.clear();
-  p.intro(pc.bgCyan(pc.black(' aictx Init - 组织级 AI 上下文管理 ')));
+export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
+  cli.command('init', '初始化 aictx 配置')
+    .action(async () => {
+      cliUX.intro('初始化 Context as Code 基础设施');
 
-  const project = await p.group(
-    {
-      metaRepo: () =>
-        p.text({
-          message: '中央 Meta 仓库地址 (Git URL 或本地绝对/相对路径)',
-          placeholder: '../meta-repo',
-          initialValue: '../meta-repo'
-        }),
-      tags: () =>
-        p.text({
-          message: '当前项目所需的规则标签 (用逗号分隔，如: frontend, payment)',
-          placeholder: 'frontend, core',
-          defaultValue: ''
-        }),
-      ide: () =>
-        p.multiselect({
-          message: '请选择需要注入的目标终端/IDE (多选)',
-          options: [
-            { value: 'trae', label: 'Trae (.trae/rules)' },
-            { value: 'cursor', label: 'Cursor (.cursor/rules/*.mdc)' },
-            { value: 'antigravity', label: 'Google Antigravity (.agents/skills)' },
-            { value: 'claude', label: 'Claude Code (.claude/rules)' }
-          ],
-          required: true
-        })
-    },
-    {
-      onCancel: () => {
-        p.cancel('操作已取消');
-        process.exit(0);
+      // 1. 询问 IDE 类型
+      const ides = await cliUX.askMultiSelect(
+        '请选择当前团队使用的 AI IDE 或编程助手 (多选)',
+        [
+          { value: 'trae', label: 'Trae', hint: '字节跳动 AI IDE (.trae/rules/)' },
+          { value: 'cursor', label: 'Cursor', hint: 'Cursor (.cursor/rules/)' },
+          { value: 'windsurf', label: 'Windsurf', hint: 'Codeium Windsurf' },
+          { value: 'claude', label: 'Claude Code', hint: 'Anthropic CLI (.clauderc)' },
+        ],
+        true
+      );
+
+      // 2. 询问 Meta-Repo 地址
+      const repoUrl = await cliUX.askText(
+        '请输入团队的中央规范仓库地址 (Git URL 或本地绝对路径)',
+        'git@github.com:your-org/aictx-meta-repo.git',
+        './'
+      );
+
+      // 3. 生成配置文件
+      const configPath = path.resolve(process.cwd(), 'aictx.json');
+      const ignorePath = path.resolve(process.cwd(), '.aiignore');
+      
+      const s = cliUX.createSpinner();
+      s.start('正在生成项目配置...');
+
+      const defaultConfig = {
+        $schema: "https://unpkg.com/aictx/schema.json",
+        version: "1.0",
+        repository: repoUrl,
+        ides: ides,
+        tags: ["backend", "frontend", "common"],
+        overrides: {}
+      };
+
+      await fs.writeJson(configPath, defaultConfig, { spaces: 2 });
+      
+      // 写入基础的 .aiignore
+      if (!fs.existsSync(ignorePath)) {
+        await fs.writeFile(ignorePath, `# aictx ignore file\n# 在此处配置不需要被 AI 读取的敏感或无价值文件\nnode_modules\n.env*\ndist\n`);
       }
-    }
-  );
 
-  const config: AictxConfig = {
-    metaRepo: project.metaRepo,
-    // 处理用户输入的 tags，去除空格和空项
-    tags: project.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean),
-    ide: project.ide as TargetIDE[]
-  };
+      s.stop('配置生成成功！');
 
-  await saveConfig(config);
-
-  p.outro(pc.green('🎉 初始化完成！现在您可以运行 `npx aictx sync` 开始同步规范。'));
-}
+      consola.box(
+        `🎉 成功接入 aictx!\n\n` +
+        `📝 配置文件已生成: ${pc.cyan('aictx.json')}\n` +
+        `🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}\n\n` +
+        `下一步，请运行: ${pc.green('aictx sync')} 获取组织上下文规范。`
+      );
+      
+      cliUX.outro('Stop fighting the AI. Start engineering its context.');
+    });
+};
