@@ -18,23 +18,16 @@ export abstract class IdeAdapter {
     await fs.writeFile(targetPath, content, 'utf-8');
   }
 
-  /**
-   * 辅助方法：清理旧规则文件
-   */
-  protected async clearDir(targetDir: string): Promise<void> {
-    if (await fs.pathExists(targetDir)) {
-      await fs.emptyDir(targetDir);
-    }
-  }
+  // 默认情况下不再粗暴清空整个目录，因为可能会误删用户原有的自定义规则
+  // 相反，我们只追踪并覆盖 aictx 生成的文件
 }
 
 export class TraeAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
     const rulesDir = path.join(cwd, '.trae', 'rules');
-    await this.clearDir(rulesDir);
 
     for (const rule of result.rules) {
-      const targetPath = path.join(rulesDir, rule.filename);
+      const targetPath = path.join(rulesDir, `aictx-${rule.filename}`);
       await this.writeRule(targetPath, rule.content);
     }
   }
@@ -43,12 +36,11 @@ export class TraeAdapter extends IdeAdapter {
 export class CursorAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
     const rulesDir = path.join(cwd, '.cursor', 'rules');
-    await this.clearDir(rulesDir);
 
     for (const rule of result.rules) {
       // Cursor 的规则通常推荐使用 .mdc 后缀，这里进行转换
       const baseName = path.basename(rule.filename, path.extname(rule.filename));
-      const targetPath = path.join(rulesDir, `${baseName}.mdc`);
+      const targetPath = path.join(rulesDir, `aictx-${baseName}.mdc`);
       
       // Cursor 规则支持 glob 匹配前缀
       const cursorContent = `---\ndescription: ${baseName}\nglobs: *\n---\n\n${rule.content}`;
@@ -61,10 +53,9 @@ export class ClaudeAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
     // Claude Code 倾向于使用 .clauderc 或者直接放在 .claude/rules/ 下
     const rulesDir = path.join(cwd, '.claude', 'rules');
-    await this.clearDir(rulesDir);
 
     for (const rule of result.rules) {
-      const targetPath = path.join(rulesDir, rule.filename);
+      const targetPath = path.join(rulesDir, `aictx-${rule.filename}`);
       await this.writeRule(targetPath, rule.content);
     }
   }
