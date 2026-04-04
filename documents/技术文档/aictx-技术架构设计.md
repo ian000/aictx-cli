@@ -28,6 +28,7 @@ roles:
 - `aictx init`: 初始化 aictx 配置。交互式询问用户所使用的 IDE/CLI (Trae/Cursor/Antigravity/Claude，支持多选并行)，并在项目根目录生成 `aictx.json`。
 - `aictx sync`: 核心命令。触发执行状态机，拉取、组装并注入规则到本地 IDE 目录。执行完毕后，自动打印“价值感知面板 (Value Dashboard)”。
 - `aictx doctor`: 诊断命令。检查本地规则是否发生 Drift (漂移/被篡改)，并计算当前注入规则的 Token 消耗预估。
+- `aictx resolve`: 冲突监测与消解命令。通过解析 Markdown 的 `entities` / `tags` 交集预估规则重叠度，结合 `@clack/prompts` 提供交互式向导，引导团队手动合并或覆盖冲突的业务红线，确保 SSOT。
 - `aictx info`: 指标数据展示命令。在终端渲染图表，展示项目从接入以来节省的 Token 数量、规则更新次数以及核心防腐数据。
 
 ## 3. 状态机流转设计 (State Machine)
@@ -48,6 +49,7 @@ src/
 ├── core/          # 核心引擎
 │   ├── fetcher/   # 多协议拉取器 (Git, Local)
 │   ├── assembler/ # 上下文组装器 (处理 gray-matter 解析和规则合并)
+│   ├── resolver/  # 冲突消解引擎 (处理 Entities/Tags 交集计算与引导)
 │   └── injector/  # 跨 IDE 适配器矩阵 (Trae, Cursor, Antigravity, Claude 策略模式写入)
 ├── config/        # 配置文件解析与校验 (Schema Validation)
 ├── utils/         # 终端 UI、日志、文件操作基建
