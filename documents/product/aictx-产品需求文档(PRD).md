@@ -64,6 +64,13 @@ roles:
 - **本地逃生舱 (Local Override)**: 提供 `.aiignore` 文件支持，允许开发者忽略特定的中央规则同步；同时支持在项目中创建 `local-override.md`，用于本地覆盖（优先级最高，且不会被 CLI 覆写）。
 - **依赖生命周期绑定**: 支持集成 npm/pnpm 的 `postinstall` 钩子，实现隐式同步。
 
+### 3.6 MOC 路由与防文档膨胀 (Map of Content)
+- **业务痛点**: 随着项目迭代，为了保持 SSOT 和防腐化，文档会急剧膨胀。如果把所有细节写在一个大文档里，会导致 AI 读取时 Token 爆炸；如果拆分成多个原子文档，AI 又很难找到它们，导致频繁调用昂贵的全局检索 (Global Search)。
+- **解决方案 (双管齐下)**:
+  - **Plan A (规范脚手架)**: 在 `aictx init` 时，自动在 `documents/` 下为用户生成 `00-Index.md` (或 `README.md`) 路由表模板。该模板内嵌 `<!-- aictx-index-start -->` 等标记。
+  - **Plan B (自动索引构建)**: 提供 `aictx index` 命令。该命令会扫描 `documents/` 下所有 Markdown 文件的 YAML Frontmatter（提取 `entities`, `description`, `aliases` 等），并自动生成带有双向链接 (`[[doc-name]]`) 的路由表格，精准注入到 `00-Index.md` 的标记位中。
+- **价值闭环**: 彻底干掉 AI 的“全局检索”行为。AI 只需要读取轻量级的 `00-Index.md`，就能顺藤摸瓜，通过双向链接精准读取所需的原子文档。既省 Token，又极大地提升了上下文命中的精确度。
+
 ## 4. 角色与权限 (RBAC)
 - **User (终端开发者)**: 消费者。通过 `npx aictx sync` 或被动钩子拉取规则，仅具有本地规则应用和**只读**权限。
 - **Maintainer (架构师)**: 生产者。在中央 Meta 仓库中定义并维护 `BaseRule` 和 `DomainRule`，掌控团队 AI 行为的“元规则”。

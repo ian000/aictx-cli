@@ -51,6 +51,19 @@ export const zh = {
   'info.stat.tokens': '累计节约 Tokens (估算)',
   'info.stat.conflicts': '排除潜在冲突',
   'info.mock_note': '注: 累计数据目前为本地 Mock 展示，后续将接入云端控制台统计。',
+
+  // index command
+  'index.intro': '编译 MOC 路由表',
+  'index.start': '正在扫描文档与索引模板...',
+  'index.error_dir': '目录不存在: {0}',
+  'index.no_template': '在 {0} 中未找到包含锚点 <!-- aictx-index-start --> 的路由表模板。',
+  'index.col.link': '文档路由 (双链)',
+  'index.col.entities': '核心实体 (Entities)',
+  'index.col.aliases': '别名 (Aliases)',
+  'index.col.desc': '简介',
+  'index.success_count': '✨ 共更新了 {0} 个索引文件',
+  'index.success_desc': '📂 路由表已重新建立，AI 上下文索引更精准。',
+  'index.outro': 'Map of Content generated successfully.',
   
   // common
   'common.error': '错误: {0}',

@@ -25,8 +25,9 @@ roles:
 - **包管理**: `pnpm` (支持 Workspace，为后续重构 Monorepo 铺路)。
 
 ## 2. 核心命令设计 (CLI Commands)
-- `aictx init`: 初始化 aictx 配置。交互式询问用户所使用的 IDE/CLI (Trae/Cursor/Antigravity/Claude，支持多选并行)，并在项目根目录生成 `aictx.json`。
+- `aictx init`: 初始化 aictx 配置与文档目录结构。除了生成 `aictx.json`，还会自动在标准目录（`documents/product`, `documents/architecture`, `documents/project`）中生成 MOC (Map of Content) 路由表模板（如 `00-Index.md` 或 `README.md`），并植入 `<!-- aictx-index-start -->` 和 `<!-- aictx-index-end -->` 锚点。
 - `aictx sync`: 核心命令。触发执行状态机，拉取、组装并注入规则到本地 IDE 目录。执行完毕后，自动打印“价值感知面板 (Value Dashboard)”。
+- `aictx index`: MOC 路由编译命令。扫描指定目录（默认 `documents/`）下的所有 Markdown 文件的 YAML Frontmatter（包括 `entities`, `aliases`, `description` 等元数据），自动生成包含文件路径和双向链接 (`[[xxx]]`) 的路由表格，并精准替换（覆写）MOC 模板文件中锚点之间的内容。
 - `aictx doctor`: 诊断命令。检查本地规则是否发生 Drift (漂移/被篡改)，并计算当前注入规则的 Token 消耗预估。
 - `aictx resolve`: 冲突监测与消解命令。通过解析 Markdown 的 `entities` / `tags` 交集预估规则重叠度，结合 `@clack/prompts` 提供交互式向导，引导团队手动合并或覆盖冲突的业务红线，确保 SSOT。
 - `aictx info`: 指标数据展示命令。在终端渲染图表，展示项目从接入以来节省的 Token 数量、规则更新次数以及核心防腐数据。

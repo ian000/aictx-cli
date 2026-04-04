@@ -52,7 +52,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
         await fs.writeFile(ignorePath, `# aictx ignore file\n# 在此处配置不需要被 AI 读取的敏感或无价值文件\nnode_modules\n.env*\ndist\n`);
       }
 
-      // Scaffold standard documents directory structure
+      // Scaffold standard documents directory structure and MOC templates
       const docBase = path.resolve(process.cwd(), 'documents');
       const dirsToCreate = [
         path.join(docBase, 'product'),
@@ -62,10 +62,37 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
 
       for (const dir of dirsToCreate) {
         await fs.ensureDir(dir);
-        const readmePath = path.join(dir, 'README.md');
-        if (!fs.existsSync(readmePath)) {
-          const folderName = path.basename(dir);
-          await fs.writeFile(readmePath, `# ${folderName}\n\nPut your ${folderName} related markdown files here. They will be automatically parsed and injected by aictx.\n`);
+        const folderName = path.basename(dir);
+        const indexPath = path.join(dir, '00-Index.md');
+        
+        if (!fs.existsSync(indexPath)) {
+          const indexContent = `---
+tags:
+  - aictx
+  - moc
+  - ${folderName}
+aliases:
+  - [${folderName} Index, 目录]
+entities:
+  - [MOC]
+roles:
+  - [Maintainer]
+---
+# ${folderName.charAt(0).toUpperCase() + folderName.slice(1)} Map of Content (MOC)
+
+> **路由表**: 这是 \`${folderName}\` 目录的核心索引文件。
+> AI 助手在寻找特定业务逻辑时，必须**优先且仅**读取此文件，并通过这里的双向链接（如 \`[[xxx]]\`）去跳转到对应的原子文档。**严禁使用全局检索**。
+
+## 📑 领域索引
+
+<!-- aictx-index-start -->
+_运行 \`aictx index\` 自动生成路由表_
+<!-- aictx-index-end -->
+
+## 📌 业务模块说明
+请在此处简要说明该目录下各原子文档的协作关系和业务边界。
+`;
+          await fs.writeFile(indexPath, indexContent);
         }
       }
 
@@ -74,8 +101,10 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       console.log('\n======================================================================');
       console.log(`🎉 成功接入 aictx!\n`);
       console.log(`📝 配置文件已生成: ${pc.cyan('aictx.json')}`);
-      console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}\n`);
+      console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}`);
+      console.log(`🗂️ 路由表模板已生成: ${pc.cyan('documents/**/00-Index.md')}\n`);
       console.log(`下一步，请运行: ${pc.green('aictx sync')} 获取组织上下文规范。`);
+      console.log(`然后运行: ${pc.green('aictx index')} 生成 MOC 本地路由。`);
       console.log('======================================================================\n');
       
       cliUX.outro('Stop fighting the AI. Start engineering its context.');

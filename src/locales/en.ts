@@ -51,6 +51,19 @@ export const en = {
   'info.stat.tokens': 'Tokens Saved (Est.)',
   'info.stat.conflicts': 'Conflicts Resolved',
   'info.mock_note': 'Note: Cumulative data is currently mocked. Cloud console statistics will be integrated in future updates.',
+
+  // index command
+  'index.intro': 'Compile MOC Routing Table',
+  'index.start': 'Scanning documents and index templates...',
+  'index.error_dir': 'Directory not found: {0}',
+  'index.no_template': 'No MOC template containing <!-- aictx-index-start --> anchor found in {0}.',
+  'index.col.link': 'Doc Route (Bi-link)',
+  'index.col.entities': 'Core Entities',
+  'index.col.aliases': 'Aliases',
+  'index.col.desc': 'Description',
+  'index.success_count': '✨ Updated {0} index files',
+  'index.success_desc': '📂 Routing table rebuilt. AI context indexing is now more precise.',
+  'index.outro': 'Map of Content generated successfully.',
   
   // common
   'common.error': 'Error: {0}',

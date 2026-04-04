@@ -98,3 +98,22 @@ roles:
 - [x] **P5.3 开源布道支持**
   - [x] 补充具体的 Rule 范例 (Examples 目录)。
   - [x] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。
+
+---
+
+## 🎯 Phase 6: MOC 路由与防文档膨胀 (Map of Content)
+*目标：通过引入标准目录和自动索引，彻底解决 AI 全局检索带来的 Token 消耗和幻觉问题。*
+
+- [x] **P6.1 MOC 脚手架模板 (`init`)**
+  - [x] 更新 `aictx init` 命令，在生成标准目录时，自动创建 `00-Index.md` 或 `README.md` 路由表模板。
+  - [x] 模板中预置 `<!-- aictx-index-start -->` 和 `<!-- aictx-index-end -->` 锚点。
+- [x] **P6.2 自动索引构建引擎 (`index`)**
+  - [x] 注册全新的 `aictx index` 命令。
+  - [x] 扫描 `documents/` 下的所有 Markdown，解析 YAML Frontmatter (`entities`, `description`, `aliases`)。
+  - [x] 自动生成带有双向链接 `[[xxx]]` 的 Markdown 表格。
+  - [x] 将生成的表格精准覆写到 MOC 模板的锚点位置。
+- [x] **P6.3 国际化与规范更新**
+  - [x] 为 `index` 命令添加中英文 i18n 翻译。
+  - [x] 更新 `.trae/rules`，教导 AI 优先读取 `00-Index.md` 并顺藤摸瓜，严禁使用全局检索。
+- [x] **P6.4 验证与集成测试**
+  - [x] 编写测试用例验证索引生成的准确性和锚点替换的安全性。

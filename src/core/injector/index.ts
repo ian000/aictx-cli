@@ -10,16 +10,8 @@ export abstract class IdeAdapter {
     await fs.writeFile(targetPath, content, 'utf-8');
   }
 
-<<<<<<< HEAD
   // 默认情况下不再粗暴清空整个目录，因为可能会误删用户原有的自定义规则
   // 相反，我们只追踪并覆盖 aictx 生成的文件
-=======
-  protected async clearDir(targetDir: string): Promise<void> {
-    if (await fs.pathExists(targetDir)) {
-      await fs.emptyDir(targetDir);
-    }
-  }
->>>>>>> f809bde (feat(i18n): add built-in multi-language support (English and Chinese))
 }
 
 export class TraeAdapter extends IdeAdapter {
@@ -39,13 +31,9 @@ export class CursorAdapter extends IdeAdapter {
 
     for (const rule of result.rules) {
       const baseName = path.basename(rule.filename, path.extname(rule.filename));
-<<<<<<< HEAD
       const targetPath = path.join(rulesDir, `aictx-${baseName}.mdc`);
       
       // Cursor 规则支持 glob 匹配前缀
-=======
-      const targetPath = path.join(rulesDir, `${baseName}.mdc`);
->>>>>>> f809bde (feat(i18n): add built-in multi-language support (English and Chinese))
       const cursorContent = `---\ndescription: ${baseName}\nglobs: *\n---\n\n${rule.content}`;
       await this.writeRule(targetPath, cursorContent);
     }
