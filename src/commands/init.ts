@@ -54,12 +54,12 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
 
       s.stop('配置生成成功！');
 
-      consola.box(
-        `🎉 成功接入 aictx!\n\n` +
-        `📝 配置文件已生成: ${pc.cyan('aictx.json')}\n` +
-        `🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}\n\n` +
-        `下一步，请运行: ${pc.green('aictx sync')} 获取组织上下文规范。`
-      );
+      console.log('\n======================================================================');
+      console.log(`🎉 成功接入 aictx!\n`);
+      console.log(`📝 配置文件已生成: ${pc.cyan('aictx.json')}`);
+      console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}\n`);
+      console.log(`下一步，请运行: ${pc.green('aictx sync')} 获取组织上下文规范。`);
+      console.log('======================================================================\n');
       
       cliUX.outro('Stop fighting the AI. Start engineering its context.');
     });

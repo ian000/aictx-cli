@@ -1,10 +1,18 @@
 #!/usr/bin/env node
-import { cac } from 'cac';
+import cac from 'cac';
 import { consola } from 'consola';
 import pc from 'picocolors';
 import { initCommand } from '../commands/init.js';
 import { syncCommand } from '../commands/sync.js';
 import { resolveCommand } from '../commands/resolve.js';
+
+// 强制设置 Node.js 在控制台输出的默认编码为 UTF-8
+if (process.stdout.setDefaultEncoding) {
+  process.stdout.setDefaultEncoding('utf-8');
+}
+if (process.stderr.setDefaultEncoding) {
+  process.stderr.setDefaultEncoding('utf-8');
+}
 
 const cli = cac('aictx');
 

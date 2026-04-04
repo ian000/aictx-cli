@@ -9,7 +9,10 @@ export const resolveCommand = async (cli: any) => {
     consola.info('  1. `rules/project-aictx-prd.md` 与 `rules/project-aictx-business-logic.md` 在 [生命周期状态机] 描述上存在分歧。');
     consola.info('  2. `rules/common-coding-workflow.md` 与 `rules/project-aictx-tech-stack.md` 在 [ORM Schema 选型] 上重叠。');
     
-    consola.box('提示: 在后续版本中，这里将提供交互式 CLI (基于 @clack/prompts) 引导团队合并或覆盖规则，以保证 SSOT。');
+    // 使用纯文本替代 consola.box 以避免 Windows 终端画线字符乱码
+    console.log('\n----------------------------------------------------------------------');
+    console.log('提示: 在后续版本中，这里将提供交互式 CLI (基于 @clack/prompts) 引导团队合并或覆盖规则，以保证 SSOT。');
+    console.log('----------------------------------------------------------------------\n');
     consola.success('扫描完成。');
   }, 1000);
 };
