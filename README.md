@@ -13,6 +13,10 @@
 
 </div>
 
+<p align="center">
+  <b>简体中文</b> | <a href="./README_EN.md">English</a>
+</p>
+
 <br />
 
 **aictx-cli** (AI Context CLI) 是专为现代研发团队打造的 **Context as Code (CaC)** 基础设施。它将团队的架构规约、业务红线、代码风格等隐性知识，转化为大模型（LLM/Agent）能够精准理解并严格遵循的显性上下文，从而彻底解决 AI 编程工具“幻觉频发”、“架构破坏”、“重复纠错”的三大痛点。
