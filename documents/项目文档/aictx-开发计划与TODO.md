@@ -88,9 +88,9 @@ roles:
 
 - [ ] **P5.1 完善测试覆盖率**
   - [ ] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
-- [ ] **P5.2 NPM 打包与发布**
-  - [ ] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
-  - [ ] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
-- [ ] **P5.3 开源布道支持**
-  - [ ] 补充具体的 Rule 范例 (Examples 目录)。
-  - [ ] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。
+- [x] **P5.2 NPM 打包与发布**
+  - [x] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
+  - [x] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
+- [x] **P5.3 开源布道支持**
+  - [x] 补充具体的 Rule 范例 (Examples 目录)。
+  - [x] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。

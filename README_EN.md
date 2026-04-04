@@ -23,6 +23,10 @@
 
 ---
 
+<div align="center">
+  <img src="https://via.placeholder.com/800x400.png?text=CLI+Demo+Animation+(Asciinema)" alt="aictx-cli demo" />
+</div>
+
 ## 💡 Why aictx?
 
 In the era of AI-Assisted Engineering, the biggest bottleneck for R&D teams is no longer the speed of code generation, but rather **"how to make AI write code that meets the current project architecture and business expectations."** Without constraints, AI-generated code often brings "frequent hallucinations," "architecture degradation," and "lost conventions."

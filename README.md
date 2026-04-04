@@ -23,6 +23,10 @@
 
 ---
 
+<div align="center">
+  <img src="https://via.placeholder.com/800x400.png?text=CLI+Demo+Animation+(Asciinema)" alt="aictx-cli demo" />
+</div>
+
 ## 💡 为什么需要 aictx？
 
 在 AI 辅助工程时代，研发团队最大的瓶颈不再是代码产出速度，而是**“如何让 AI 写出符合当前项目架构和业务预期的代码”**。如果不加约束，AI 生成的代码往往伴随着“幻觉频发”、“架构破坏”与“规范丢失”。

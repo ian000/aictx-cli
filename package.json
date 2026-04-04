@@ -4,16 +4,34 @@
   "description": "Context as Code (CaC) CLI for AI-Assisted Engineering",
   "type": "module",
   "bin": {
-    "aictx": "./dist/aictx.js"
+    "aictx": "dist/aictx.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "start": "node ./dist/aictx.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitee.com/kings2017/aictx-cli.git"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "context",
+    "cac",
+    "llm",
+    "agent",
+    "trae",
+    "cursor",
+    "rules"
+  ],
+  "author": "kings2017",
+  "license": "MIT",
   "dependencies": {
     "@clack/prompts": "^1.2.0",
     "cac": "^7.0.0",
@@ -21,7 +39,8 @@
     "fs-extra": "^11.3.4",
     "gray-matter": "^4.0.3",
     "picocolors": "^1.1.1",
-    "tiktoken": "^1.0.22"
+    "tinyexec": "^0.3.2",
+    "tinyglobby": "^0.2.10"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
