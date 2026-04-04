@@ -5,6 +5,7 @@ export const en = {
   'init.select_ide': 'Which AI IDEs / CLI tools does your team use?',
   'init.enter_repo': 'Enter the URL of your remote Meta-Repo rules (optional, press Enter to skip)',
   'init.enter_tags': 'Enter the business tags for this project (comma separated, e.g. frontend, global)',
+  'init.scaffold': 'Scaffolding standard documents directory...',
   'init.success': 'Initialization complete! You can now run `aictx sync` to fetch the context.',
   
   // sync command

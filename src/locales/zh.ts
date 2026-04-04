@@ -5,6 +5,7 @@ export const zh = {
   'init.select_ide': '你的团队主要使用哪些 AI IDE / CLI 工具？',
   'init.enter_repo': '请输入团队远程 Meta-Repo 规则仓库地址 (可选，回车跳过)',
   'init.enter_tags': '请输入该项目的业务标签 (用逗号分隔，如: frontend, global)',
+  'init.scaffold': '正在创建标准文档目录结构...',
   'init.success': '初始化成功！你现在可以运行 `aictx sync` 拉取上下文。',
   
   // sync command

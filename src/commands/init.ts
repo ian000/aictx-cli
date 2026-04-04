@@ -4,64 +4,44 @@ import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
 import { cliUX } from '../utils/cli-ux.js';
-import { t, setLanguage, Language } from '../locales/index.js';
 
 export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
-  cli.command('init', 'Initialize aictx configuration / 初始化 aictx 配置')
+  cli.command('init', '初始化 aictx 配置')
     .action(async () => {
-      // 0. 询问语言
-      const lang = await cliUX.askSelect<Language>(
-        'Please select your preferred language / 请选择你的首选语言',
-        [
-          { value: 'en', label: 'English' },
-          { value: 'zh', label: '简体中文' }
-        ]
-      );
-      setLanguage(lang);
-
-      cliUX.intro(t('init.welcome'));
+      cliUX.intro('初始化 Context as Code 基础设施');
 
       // 1. 询问 IDE 类型
       const ides = await cliUX.askMultiSelect(
-        t('init.select_ide'),
+        '请选择当前团队使用的 AI IDE 或编程助手 (多选)',
         [
-          { value: 'trae', label: 'Trae', hint: '(.trae/rules/)' },
-          { value: 'cursor', label: 'Cursor', hint: '(.cursor/rules/)' },
+          { value: 'trae', label: 'Trae', hint: '字节跳动 AI IDE (.trae/rules/)' },
+          { value: 'cursor', label: 'Cursor', hint: 'Cursor (.cursor/rules/)' },
           { value: 'windsurf', label: 'Windsurf', hint: 'Codeium Windsurf' },
-          { value: 'claude', label: 'Claude Code', hint: '(.clauderc)' },
+          { value: 'claude', label: 'Claude Code', hint: 'Anthropic CLI (.clauderc)' },
         ],
         true
       );
 
       // 2. 询问 Meta-Repo 地址
       const repoUrl = await cliUX.askText(
-        t('init.enter_repo'),
+        '请输入团队的中央规范仓库地址 (Git URL 或本地绝对路径)',
         'git@github.com:your-org/aictx-meta-repo.git',
         './'
       );
 
-      // 3. 询问 tags
-      const tagsStr = await cliUX.askText(
-        t('init.enter_tags'),
-        'frontend, common',
-        'frontend, common'
-      );
-      const tags = tagsStr.split(',').map(s => s.trim()).filter(Boolean);
-
-      // 4. 生成配置文件
+      // 3. 生成配置文件
       const configPath = path.resolve(process.cwd(), 'aictx.json');
       const ignorePath = path.resolve(process.cwd(), '.aiignore');
       
       const s = cliUX.createSpinner();
-      s.start(t('sync.assemble') + '...'); // using a placeholder
+      s.start('正在生成项目配置...');
 
       const defaultConfig = {
         $schema: "https://unpkg.com/aictx/schema.json",
         version: "1.0",
-        lang: lang,
         repository: repoUrl,
         ides: ides,
-        tags: tags.length > 0 ? tags : ["common"],
+        tags: ["backend", "frontend", "common"],
         overrides: {}
       };
 
@@ -69,16 +49,33 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       
       // 写入基础的 .aiignore
       if (!fs.existsSync(ignorePath)) {
-        await fs.writeFile(ignorePath, `# aictx ignore file\nnode_modules\n.env*\ndist\n`);
+        await fs.writeFile(ignorePath, `# aictx ignore file\n# 在此处配置不需要被 AI 读取的敏感或无价值文件\nnode_modules\n.env*\ndist\n`);
       }
 
-      s.stop(t('init.success'));
+      // Scaffold standard documents directory structure
+      const docBase = path.resolve(process.cwd(), 'documents');
+      const dirsToCreate = [
+        path.join(docBase, 'product'),
+        path.join(docBase, 'architecture'),
+        path.join(docBase, 'project')
+      ];
+
+      for (const dir of dirsToCreate) {
+        await fs.ensureDir(dir);
+        const readmePath = path.join(dir, 'README.md');
+        if (!fs.existsSync(readmePath)) {
+          const folderName = path.basename(dir);
+          await fs.writeFile(readmePath, `# ${folderName}\n\nPut your ${folderName} related markdown files here. They will be automatically parsed and injected by aictx.\n`);
+        }
+      }
+
+      s.stop('配置生成成功！');
 
       console.log('\n======================================================================');
-      console.log(`🎉 aictx initialized!\n`);
-      console.log(`📝 Config: ${pc.cyan('aictx.json')}`);
-      console.log(`🛡️ Ignore: ${pc.cyan('.aiignore')}\n`);
-      console.log(`Next: ${pc.green('aictx sync')}`);
+      console.log(`🎉 成功接入 aictx!\n`);
+      console.log(`📝 配置文件已生成: ${pc.cyan('aictx.json')}`);
+      console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}\n`);
+      console.log(`下一步，请运行: ${pc.green('aictx sync')} 获取组织上下文规范。`);
       console.log('======================================================================\n');
       
       cliUX.outro('Stop fighting the AI. Start engineering its context.');
