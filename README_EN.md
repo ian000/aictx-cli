@@ -19,7 +19,9 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure designed for modern engineering teams. It transforms implicit team knowledge—such as architectural conventions, business boundaries, and coding styles—into explicit context that Large Language Models (LLMs/Agents) can precisely understand and strictly follow. This completely resolves the three major pain points of AI coding tools: "frequent hallucinations," "architecture degradation," and "repetitive error correction."
+**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure designed for the AI-Assisted Engineering era. By introducing its original **Map of Content (MOC) precise routing mechanism**, it transforms implicit architectural conventions and business boundaries into explicit context that Large Language Models (LLMs/Agents) can precisely understand.
+
+aictx is designed to solve an absolute pain point: **How to bring AI hallucination rates down to freezing point while maintaining extremely low Token consumption?** Whether you are a solo full-stack developer or a mid-to-large R&D team, aictx completely ends the nightmare of "architectural collapse caused by LLM free-styling".
 
 ---
 
@@ -29,20 +31,22 @@
 
 ## 💡 Why aictx?
 
-In the era of AI-Assisted Engineering, the biggest bottleneck for R&D teams is no longer the speed of code generation, but rather **"how to make AI write code that meets the current project architecture and business expectations."** Without constraints, AI-generated code often brings "frequent hallucinations," "architecture degradation," and "lost conventions."
+In the era of AI-Assisted Engineering, the biggest bottleneck for developers is no longer the speed of code generation, but rather **"how to low-costly make AI write code that meets the current project architecture and business expectations."**
 
-By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit knowledge directly into the codebase, delivering an immediate leap in efficiency for both teams and individual developers.
+The current market faces a deadlock: if AI is allowed to free-style, it often brings "frequent hallucinations" and "architecture degradation"; if you "dump" massive global context into the LLM to constrain it, Token consumption explodes, and the AI easily loses focus due to Context Bloat.
+
+aictx breaks this deadlock, bringing immediate efficiency leaps to both **individual developers** and **R&D teams**:
+
+### 🎯 Balance Extremely Low Tokens with Zero Hallucinations
+Completely abandons the inefficient and expensive "global search" or "full RAG" approach of traditional AI tools. aictx's built-in MOC routing mechanism based on Markdown Frontmatter allows LLMs to navigate precisely to required atomic documents by simply reading a lightweight index table of a few dozen lines. **Reduces long-context Token consumption by 80% while achieving a "low-cost, zero-hallucination" precise context feed.**
+
+### 🧑‍💻 For Individual Developers (Individual)
+- **Say Goodbye to "Explaining to AI"**: No more pasting lengthy Prompts or manually attaching tons of documents every time you open Trae / Cursor / Claude Code. Run `aictx sync`, and the IDE instantly "gets you," slashing communication costs by 40%.
+- **Out of the Box, Zero Intrusion**: Mount AI armor onto your project with a single command, completely without polluting your existing business logic.
 
 ### 🏢 For R&D Teams (Team)
-- **Unify AI Technical Architecture**: Codify architecture rules, business boundaries, and API styles as CaC rules. Solves the core pain point of "10 AI assistants writing 10 different architectures" within a team. No matter how many new hires join, the AI assistant will strictly block non-compliant code generation, ensuring architecture stability at the source.
-- **Stop "Trial and Error"**: Core architects only need to write a rule once (e.g., `project-aictx-prd.md`). With one click, it syncs to the local IDEs of all team members, ensuring **100% knowledge alignment** across the organization and completely eliminating the risk of production incidents caused by LLM hallucinations.
+- **Unify AI Technical Architecture**: Solves the core pain point of "10 AI assistants writing 10 different architectures" within a team. No matter how many new hires join, the AI assistant will strictly block non-compliant code generation, ensuring architecture stability at the source.
 - **Enforce SSOT (Single Source of Truth)**: The built-in conflict resolution engine (`resolve`) deeply scans for contradictory business descriptions within the team, preventing the LLM from becoming "schizophrenic" due to context conflicts.
-
-### 🧑‍💻 For Individual Developers (Developer)
-- **Balance Extremely Low Tokens with Zero Hallucinations**: Say goodbye to the inefficient and expensive "global search" approach of traditional AI tools. The built-in MOC routing mechanism allows LLMs to navigate precisely to atomic documents with minimal token consumption, achieving a "low-cost, zero-hallucination" context feed.
-- **Say Goodbye to "Explaining to AI"**: No more pasting lengthy Prompts every time you open Trae / Cursor / Claude Code. Run `aictx sync`, and the IDE instantly "gets you," slashing communication costs by 40%.
-- **Save Tokens, Prevent Overload**: Intelligent context assembly and warnings (`doctor`) prune irrelevant rules on demand to prevent Context Bloat. This not only makes AI respond faster but also avoids wasting expensive long-context Tokens.
-- **Out of the Box, Zero Intrusion**: Mount AI armor onto your project with a single command, completely without polluting your existing business logic.
 
 ## ✨ Core Features
 
