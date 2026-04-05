@@ -106,7 +106,7 @@ aictx sync
 
 ## 🏗️ Architecture Roadmap
 
-aictx is committed to becoming the standard infrastructure for the AI-Assisted Engineering era, making AI team collaboration effortless. Our core evolution directions include:
+aictx is committed to becoming the standard infrastructure for the AI-Assisted Engineering era. Whether helping **solo full-stack developers** build low-token personal knowledge bases or empowering **mid-to-large teams** to achieve architecture consistency, our evolution roadmap includes:
 
 - [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
   - Core command scaffold (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)
