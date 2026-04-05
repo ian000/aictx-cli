@@ -106,7 +106,7 @@ aictx sync
 
 ## 🏗️ Architecture Roadmap
 
-aictx aims to become the "Kubernetes" of the AI-Assisted Engineering era. Core evolution directions include:
+aictx aims to become the "**Terraform**" of the AI-Assisted Engineering era. Core evolution directions include:
 
 - [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
   - Core command scaffold (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)
