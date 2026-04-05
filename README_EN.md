@@ -39,6 +39,7 @@ By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit k
 - **Enforce SSOT (Single Source of Truth)**: The built-in conflict resolution engine (`resolve`) deeply scans for contradictory business descriptions within the team, preventing the LLM from becoming "schizophrenic" due to context conflicts.
 
 ### 🧑‍💻 For Individual Developers (Developer)
+- **Balance Extremely Low Tokens with Zero Hallucinations**: Say goodbye to the inefficient and expensive "global search" approach of traditional AI tools. The built-in MOC routing mechanism allows LLMs to navigate precisely to atomic documents with minimal token consumption, achieving a "low-cost, zero-hallucination" context feed.
 - **Say Goodbye to "Explaining to AI"**: No more pasting lengthy Prompts every time you open Trae / Cursor / Claude Code. Run `aictx sync`, and the IDE instantly "gets you," slashing communication costs by 40%.
 - **Save Tokens, Prevent Overload**: Intelligent context assembly and warnings (`doctor`) prune irrelevant rules on demand to prevent Context Bloat. This not only makes AI respond faster but also avoids wasting expensive long-context Tokens.
 - **Out of the Box, Zero Intrusion**: Mount AI armor onto your project with a single command, completely without polluting your existing business logic.
