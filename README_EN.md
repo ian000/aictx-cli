@@ -47,6 +47,8 @@ By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit k
 
 - 🧩 **One-Click Sync, Out of the Box**
   Automatically fetch, assemble, and inject the latest AI context rules into your project. Supports custom RAG knowledge bases on demand.
+- 🗂️ **MOC Routing & Anti-Context Bloat (Index)**
+  Automatically scans Markdown Frontmatter to generate a Map of Content routing table based on bi-directional links, putting an end to expensive AI "global searches".
 - 🛡️ **Local Health Diagnosis (Doctor)**
   Intelligently diagnose the health of local rules and token consumption levels, providing early warnings for context "pollution" and overload risks.
 - ⚖️ **Conflict Resolution (Resolve)**
@@ -88,8 +90,9 @@ aictx sync
 
 | Command | Description | Scenario |
 |---|---|---|
-| `aictx init` | Initialize aictx configuration | Integrate CaC into a new project |
+| `aictx init` | Initialize config & doc directories | Integrate CaC into a new project |
 | `aictx sync` | Sync and assemble AI context rules | Get the latest team architecture conventions |
+| `aictx index`| Compile MOC bi-link routing table | Rebuild AI index after docs are created/modified |
 | `aictx doctor` | Diagnose local rules & token health | Troubleshoot AI context "pollution" or overload |
 | `aictx resolve`| Interactively resolve context conflicts | When multiple rules describe the same business boundary |
 | `aictx info` | Display aictx core metrics dashboard | Gain insights into team convention adoption |
@@ -101,8 +104,9 @@ aictx sync
 aictx aims to become the "Kubernetes" of the AI-Assisted Engineering era. Core evolution directions include:
 
 - [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
-  - Core command scaffold (`init`, `sync`, `doctor`, `resolve`, `info`)
+  - Core command scaffold (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)
   - Cross-platform compatible builds
+  - Automatic MOC bi-link indexing mechanism
 - [ ] **Phase 2: Rule Parser & Assembler Engine**
   - Support multi-source rule fetching (Git, Local, HTTP)
   - AST-level project feature sniffing & dynamic Context injection

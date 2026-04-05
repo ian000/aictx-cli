@@ -2,17 +2,17 @@
 tags:
   - aictx
   - moc
-  - product
+  - architecture
 aliases:
-  - [product Index, 目录]
+  - [architecture Index, 目录]
 entities:
   - [MOC]
 roles:
   - [Maintainer]
 ---
-# Product Map of Content (MOC)
+# Architecture Map of Content (MOC)
 
-> **路由表**: 这是 `product` 目录的核心索引文件。
+> **路由表**: 这是 `architecture` 目录的核心索引文件。
 > AI 助手在寻找特定业务逻辑时，必须**优先且仅**读取此文件，并通过这里的双向链接（如 `[[xxx]]`）去跳转到对应的原子文档。**严禁使用全局检索**。
 
 ## 📑 领域索引
@@ -21,8 +21,7 @@ roles:
 
 | Doc Route (Bi-link) | Core Entities | Aliases | Description |
 | --- | --- | --- | --- |
-| [[aictx-产品需求文档(PRD)]] | `BaseRule,DomainRule,Skill` | `aictx 产品需求文档,Context as Code` | aictx 产品需求文档 (PRD) |
-| [[产品定义与核心愿景]] | `-` | `-` | 一、 产品定义与核心愿景 (Product Vision) |
+| [[aictx-技术架构设计]] | `ContextAssembler,Fetcher,Injector` | `aictx 技术架构设计,Architecture` | aictx 技术架构设计 (Architecture) |
 
 <!-- aictx-index-end -->
 
