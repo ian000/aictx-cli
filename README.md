@@ -104,7 +104,7 @@ aictx sync
 
 ## 🏗️ 架构愿景 (Roadmap)
 
-aictx 旨在成为 AI-Assisted Engineering 时代的“**Terraform**”，核心演进方向包括：
+aictx 致力于成为 AI-Assisted Engineering 时代的标准基础设施，让天下没有难以协同的 AI 团队。我们的核心演进方向包括：
 
 - [x] **Phase 1: CLI 基础设施搭建** (当前阶段)
   - 核心指令脚手架 (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)

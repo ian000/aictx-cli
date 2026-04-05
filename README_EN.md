@@ -106,7 +106,7 @@ aictx sync
 
 ## 🏗️ Architecture Roadmap
 
-aictx aims to become the "**Terraform**" of the AI-Assisted Engineering era. Core evolution directions include:
+aictx is committed to becoming the standard infrastructure for the AI-Assisted Engineering era, making AI team collaboration effortless. Our core evolution directions include:
 
 - [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
   - Core command scaffold (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)
