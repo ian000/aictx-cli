@@ -46,10 +46,10 @@ By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit k
 
 ## ✨ Core Features
 
+- 🗂️ **Zero Hallucinations: Extremely Low Tokens & Precise Routing (MOC Index)**
+  Built-in Map of Content (MOC) routing mechanism based on Markdown Frontmatter. LLMs only need to read a few dozen lines of the index table to precisely jump to target atomic documents via bi-directional links. **Completely abandons expensive and inefficient "global searches", reducing token consumption by 80% while bringing AI hallucinations down to freezing point.**
 - 🧩 **One-Click Sync, Out of the Box**
   Automatically fetch, assemble, and inject the latest AI context rules into your project. Supports custom RAG knowledge bases on demand.
-- 🗂️ **MOC Routing & Anti-Context Bloat (Index)**
-  Automatically scans Markdown Frontmatter to generate a Map of Content routing table based on bi-directional links, putting an end to expensive AI "global searches".
 - 🛡️ **Local Health Diagnosis (Doctor)**
   Intelligently diagnose the health of local rules and token consumption levels, providing early warnings for context "pollution" and overload risks.
 - ⚖️ **Conflict Resolution (Resolve)**
