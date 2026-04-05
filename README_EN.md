@@ -7,7 +7,7 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://img.shields.io/npm/v/aictx.svg)](https://www.npmjs.com/package/aictx)
+[![npm version](https://img.shields.io/npm/v/aictx-cli.svg)](https://www.npmjs.com/package/aictx-cli)
 [![Build Status](https://github.com/kings2017/aictx-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/kings2017/aictx-cli/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -72,9 +72,9 @@ Completely abandons the inefficient and expensive "global search" or "full RAG" 
 
 Install globally:
 ```bash
-npm install -g aictx
+npm install -g aictx-cli
 # or using pnpm/yarn
-pnpm add -g aictx
+pnpm add -g aictx-cli
 ```
 
 ### 2. Initialize Configuration
