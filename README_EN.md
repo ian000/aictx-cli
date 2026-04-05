@@ -34,8 +34,8 @@ In the era of AI-Assisted Engineering, the biggest bottleneck for R&D teams is n
 By introducing the **Context as Code (CaC)** philosophy, aictx embeds implicit knowledge directly into the codebase, delivering an immediate leap in efficiency for both teams and individual developers.
 
 ### 🏢 For R&D Teams (Team)
-- **End the "Broken Windows" Effect**: Codify architecture rules, business boundaries, and naming conventions as CaC. No matter how many new hires or contractors join the team, the AI assistant will strictly block non-compliant code generation, ensuring quality at the source.
-- **Stop "Reinventing the Wheel"**: Core architects only need to write a rule once (e.g., `project-aictx-prd.md`). With one click, it syncs to the local IDEs of all team members, ensuring **100% knowledge alignment** and eliminating information silos.
+- **Unify AI Technical Architecture**: Codify architecture rules, business boundaries, and API styles as CaC rules. Solves the core pain point of "10 AI assistants writing 10 different architectures" within a team. No matter how many new hires join, the AI assistant will strictly block non-compliant code generation, ensuring architecture stability at the source.
+- **Stop "Trial and Error"**: Core architects only need to write a rule once (e.g., `project-aictx-prd.md`). With one click, it syncs to the local IDEs of all team members, ensuring **100% knowledge alignment** across the organization and completely eliminating the risk of production incidents caused by LLM hallucinations.
 - **Enforce SSOT (Single Source of Truth)**: The built-in conflict resolution engine (`resolve`) deeply scans for contradictory business descriptions within the team, preventing the LLM from becoming "schizophrenic" due to context conflicts.
 
 ### 🧑‍💻 For Individual Developers (Developer)
