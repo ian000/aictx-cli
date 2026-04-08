@@ -9,7 +9,7 @@ import { t } from '../locales/index.js';
 
 export const indexCommand = (cli: ReturnType<typeof defineCommand>) => {
   cli.command('index', '编译并更新 MOC (Map of Content) 路由表')
-    .option('-d, --dir <dir>', '指定要扫描的文档根目录', { default: 'documents' })
+    .option('-d, --dir <dir>', '指定要扫描的文档根目录', { default: 'aictx-docs' })
     .action(async (options) => {
       cliUX.intro(t('index.intro'));
 

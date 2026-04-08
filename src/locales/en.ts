@@ -5,7 +5,7 @@ export const en = {
   'init.select_ide': 'Which AI IDEs / CLI tools does your team use?',
   'init.enter_repo': 'Enter the URL of your remote Meta-Repo rules (optional, press Enter to skip)',
   'init.enter_tags': 'Enter the business tags for this project (comma separated, e.g. frontend, global)',
-  'init.scaffold': 'Scaffolding standard documents directory...',
+  'init.scaffold': 'Scaffolding standard aictx-docs directory...',
   'init.success': 'Initialization complete! You can now run `aictx sync` to fetch the context.',
   
   // sync command
@@ -54,7 +54,7 @@ export const en = {
 
   // index command
   'index.intro': 'Compile MOC Routing Table',
-  'index.start': 'Scanning documents and index templates...',
+  'index.start': 'Scanning aictx-docs and index templates...',
   'index.error_dir': 'Directory not found: {0}',
   'index.no_template': 'No MOC template containing <!-- aictx-index-start --> anchor found in {0}.',
   'index.col.link': 'Doc Route (Bi-link)',

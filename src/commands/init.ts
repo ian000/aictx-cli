@@ -94,7 +94,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       }
 
       // Scaffold standard documents directory structure and MOC templates
-      const docBase = path.resolve(process.cwd(), 'documents');
+      const docBase = path.resolve(process.cwd(), 'aictx-docs');
       const dirsToCreate = [
         path.join(docBase, 'product'),
         path.join(docBase, 'architecture'),
@@ -157,7 +157,7 @@ _运行 \`aictx index\` 自动生成路由表_
       console.log(`🎉 成功接入 aictx!\n`);
       console.log(`📝 配置文件已生成: ${pc.cyan('aictx.json')}`);
       console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}`);
-      console.log(`🗂️ 路由表模板已生成: ${pc.cyan('documents/**/00-Index.md')}\n`);
+      console.log(`🗂️ 路由表模板已生成: ${pc.cyan('aictx-docs/**/00-Index.md')}\n`);
       console.log('======================================================================\n');
       
       // 自动执行 aictx sync
