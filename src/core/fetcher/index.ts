@@ -2,8 +2,28 @@ import fs from 'fs-extra';
 import path from 'path';
 import { consola } from 'consola';
 import { x } from 'tinyexec';
+import { fileURLToPath } from 'url';
 
-export async function fetchRules(repository: string, cacheDir: string): Promise<void> {
+export async function fetchRules(repository: string | undefined, cacheDir: string): Promise<void> {
+  if (!repository || repository.trim() === '' || repository === 'builtin') {
+    // 采用内置模板 (Builtin fallback)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    // Depending on tsup config, aictx.js is in dist/aictx.js
+    // templates are in dist/../templates
+    const templatesDir = path.resolve(__dirname, '../templates/.trae/rules');
+    
+    if (fs.existsSync(templatesDir)) {
+      // Empty the cache dir first
+      await fs.emptyDir(cacheDir);
+      // Copy the builtin rules into cacheDir
+      await fs.copy(templatesDir, cacheDir, { overwrite: true });
+    } else {
+      throw new Error(`未找到内置规则模板目录: ${templatesDir}`);
+    }
+    return;
+  }
+
   // 如果是本地路径，则直接复制
   if (repository.startsWith('.') || repository.startsWith('/') || /^[a-zA-Z]:\\/.test(repository)) {
     const localPath = path.resolve(process.cwd(), repository);

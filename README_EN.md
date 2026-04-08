@@ -94,14 +94,19 @@ aictx sync
 
 ## 🛠️ CLI Commands
 
-| Command | Description | Scenario |
+> **Design Philosophy: Invisible CLI**
+> aictx advocates reducing developers' cognitive load. The vast majority of commands are automatically invoked by AI assistants or silently triggered via engineering hooks. Humans only need to intervene during initialization or conflict resolution.
+
+| Command | Description | Trigger Method (Scenario) |
 |---|---|---|
-| `aictx init` | Initialize config & doc directories | Integrate CaC into a new project |
-| `aictx sync` | Sync and assemble AI context rules | Get the latest team architecture conventions |
-| `aictx index`| Compile MOC bi-link routing table | Rebuild AI index after docs are created/modified |
-| `aictx doctor` | Diagnose local rules & token health | Troubleshoot AI context "pollution" or overload |
-| `aictx resolve`| Interactively resolve context conflicts | When multiple rules describe the same business boundary |
-| `aictx info` | Display aictx core metrics dashboard | Gain insights into team convention adoption |
+| `aictx init` | Smart Wizard (Supports Greenfield & Brownfield reverse eng.) | **👤 Manual** (Only once when adopting aictx framework) |
+| `aictx info` | Display anti-corruption & token savings dashboard | **👤 Manual** (On-demand insights into team convention adoption) |
+| `aictx resolve`| Interactively resolve context conflicts | **👤 Manual** (Intervene when multiple rules describe the same boundary) |
+| `aictx plan` | Generate architecture change intent & task list | **🤖 AI Auto** (Before writing code for new requirements) |
+| `aictx apply` | Execute code changes & solidify knowledge base | **🤖 AI Auto** (After human reviews the plan) |
+| `aictx index`| Compile MOC bi-link routing table | **🤖 AI Auto** (Rebuild AI index after docs are modified) |
+| `aictx sync` | Sync, assemble, and inject AI context rules | **🪝 Hook Silent** (Recommended to bind to `postinstall`) |
+| `aictx doctor` | Diagnose local rules drift & token health | **🪝 Hook Silent** (Recommended to bind to Git `pre-commit`) |
 
 > Run `aictx <command> --help` for detailed usage of any command.
 

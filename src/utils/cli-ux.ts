@@ -1,4 +1,4 @@
-import { intro, outro, spinner, select, text, multiselect, isCancel, cancel } from '@clack/prompts';
+import { intro, outro, spinner, select, text, multiselect, isCancel, cancel, confirm } from '@clack/prompts';
 import pc from 'picocolors';
 
 export const cliUX = {
@@ -11,6 +11,14 @@ export const cliUX = {
       process.exit(0);
     }
     return value;
+  },
+
+  async askConfirm(message: string, initialValue: boolean = true) {
+    const result = await confirm({
+      message,
+      initialValue,
+    });
+    return this.checkCancel(result);
   },
 
   async askText(message: string, placeholder?: string, defaultValue?: string) {
@@ -44,6 +52,7 @@ export const cliUX = {
     return {
       start: (msg: string) => s.start(msg),
       stop: (msg: string) => s.stop(msg),
+      message: (msg: string) => s.message(msg),
     };
   }
 };

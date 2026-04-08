@@ -21,7 +21,8 @@ roles:
 
 | Doc Route (Bi-link) | Core Entities | Aliases | Description |
 | --- | --- | --- | --- |
-| [[aictx-技术架构设计]] | `ContextAssembler,Fetcher,Injector` | `aictx 技术架构设计,Architecture` | aictx 技术架构设计 (Architecture) |
+| [[aictx-技术架构设计]] | `OnboardEngine,Graphify,Context Assembler,Adapter` | `aictx-cli 系统架构,架构纪实` | aictx-cli 当前系统架构纪实 (As-Is Architecture) |
+| [[system-graph]] | `` | `系统架构图谱,System Graph` | 系统架构拓扑审查 (System Architecture Report) |
 
 <!-- aictx-index-end -->
 

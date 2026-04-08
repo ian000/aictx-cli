@@ -5,7 +5,7 @@ export interface AictxConfig {
   $schema?: string;
   version: string;
   lang?: 'en' | 'zh';
-  repository: string;
+  repository?: string;
   ides: string[];
   tags: string[];
   overrides?: Record<string, any>;
@@ -39,9 +39,6 @@ export class ConfigParser {
   }
 
   private validate(config: any) {
-    if (!config.repository || typeof config.repository !== 'string') {
-      throw new Error('配置文件缺少有效的 repository 字段。');
-    }
     if (!Array.isArray(config.ides) || config.ides.length === 0) {
       throw new Error('配置文件缺少 ides 字段或为空。');
     }

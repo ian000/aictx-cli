@@ -42,11 +42,12 @@ export async function assembleRules(sourceDir: string, projectTags: string[]): P
     const fileTags: string[] = parsed.data.tags || [];
     const contentTokens = countTokens(rawContent);
 
-    // 如果未配置 tags，或者项目 tags 和 规则 tags 有交集，或者该规则是全局的 (tags: ["common" | "global"])
+    // 严格过滤机制：
+    // 1. 如果规则文件没有任何 tags，我们认为它不是一个合格的 aictx 规则文件（比如 README），直接忽略。
+    // 2. 如果文件有 tags，检查它是否包含 'common' / 'global'，或者与项目 tags 有交集。
     const isMatched = 
-      projectTags.length === 0 || 
-      fileTags.length === 0 || 
-      fileTags.some(tag => projectTags.includes(tag) || tag === 'common' || tag === 'global');
+      fileTags.length > 0 && 
+      (projectTags.length === 0 || fileTags.some(tag => projectTags.includes(tag) || tag === 'common' || tag === 'global'));
 
     if (isMatched) {
       result.rules.push({

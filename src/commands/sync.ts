@@ -5,6 +5,7 @@ import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../c
 import { consola } from 'consola';
 import pc from 'picocolors';
 import path from 'path';
+import fs from 'fs-extra';
 
 const adapters: Record<string, any> = {
   trae: new TraeAdapter(),
@@ -25,6 +26,11 @@ export const syncCommand = (cli: any) => {
         const cacheDir = path.join(cwd, '.aictx-cache');
         
         // 1. Fetch
+        if (!config.repository || config.repository.trim() === '') {
+          consola.start('正在释放 aictx 内置防腐与架构规则 (Builtin Templates)...');
+        } else {
+          consola.start(`正在从远程 Meta-Repo 同步规则: ${config.repository}`);
+        }
         await fetchRules(config.repository, cacheDir);
 
         // 2. Assemble
@@ -33,6 +39,11 @@ export const syncCommand = (cli: any) => {
         
         if (result.rules.length === 0) {
           consola.warn('未找到匹配的规则，可能是 Tags 过滤过严，或者规则仓库为空。');
+          console.log('\n💡 ' + pc.yellow('未找到专属业务红线 (No Domain Rules Found)'));
+          console.log(pc.gray(`我们发现您当前的 aictx.json 配置了 tags: [${config.tags.join(', ')}]，但在规则仓库中并未匹配到对应的业务架构文档。`));
+          console.log('👇 ' + pc.cyan('解决建议：'));
+          console.log(`请在您的 AI IDE (如 Trae) 对话框中输入：${pc.green('为当前项目生成新的业务规则脚手架')}`);
+          console.log('AI 将自动调用内置的 `aictx-biz-scaffolder` 技能帮您初始化。');
           return;
         }
 
@@ -55,6 +66,14 @@ export const syncCommand = (cli: any) => {
             consola.warn(`未找到对应 ${ide} 的注入适配器。`);
           }
         }
+
+        // 检查是否有专属业务规则
+        const projectName = path.basename(cwd);
+        const hasDomainRules = result.rules.some(r => r.name && r.name.includes(projectName));
+        
+        // 我们将是否包含 domain rule 的状态写入到一个临时文件里，供外层 onboard 读取
+        const statusPath = path.resolve(cwd, '.aictx-sync-status.json');
+        await fs.writeJson(statusPath, { hasDomainRules, projectName });
 
         // 4. Value Dashboard (Value Perception)
         console.log('\n======================================================================');

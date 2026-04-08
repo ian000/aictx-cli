@@ -2,6 +2,395 @@
 
 
 
+## [00-Index.md]
+
+---
+tags:
+  - aictx
+  - moc
+  - architecture
+aliases:
+  - [architecture Index, 目录]
+entities:
+  - [MOC]
+roles:
+  - [Maintainer]
+---
+# Architecture Map of Content (MOC)
+
+> **路由表**: 这是 `architecture` 目录的核心索引文件。
+> AI 助手在寻找特定业务逻辑时，必须**优先且仅**读取此文件，并通过这里的双向链接（如 `[[xxx]]`）去跳转到对应的原子文档。**严禁使用全局检索**。
+
+## 📑 领域索引
+
+<!-- aictx-index-start -->
+
+| Doc Route (Bi-link) | Core Entities | Aliases | Description |
+| --- | --- | --- | --- |
+| [[aictx-技术架构设计]] | `ContextAssembler,Fetcher,Injector` | `aictx 技术架构设计,Architecture` | aictx 技术架构设计 (Architecture) |
+
+<!-- aictx-index-end -->
+
+## 📌 业务模块说明
+请在此处简要说明该目录下各原子文档的协作关系和业务边界。
+
+
+## [aictx-技术架构设计.md]
+
+---
+tags:
+  - aictx
+  - 技术架构
+aliases:
+  - [aictx 技术架构设计, Architecture]
+entities:
+  - [ContextAssembler, Fetcher, Injector]
+roles:
+  - [Developer]
+---
+# aictx 技术架构设计 (Architecture)
+
+> **设计准则**: 极速冷启动、零环境侵入、跨平台兼容、终端交互优雅。
+
+## 1. 技术栈选型 (Tech Stack)
+- **开发语言**: `TypeScript` (强类型，Node 生态契合度最高)。
+- **CLI 框架**: `cac` (极轻量级，性能远优于 commander，适合 DevTool)。
+- **交互与 UI**: `@clack/prompts` (无感知、现代化的终端交互组件) + `picocolors` (终端着色) + `consola` (日志分级)。
+- **文件与解析**: 
+  - `fs-extra` (增强型文件系统操作)。
+  - `gray-matter` (高效解析 Markdown 的 YAML Frontmatter)。
+  - `tiktoken` / 字符估算算法 (用于快速预估 Token 消耗，防止 Context Bloat)。
+- **构建与打包**: `tsup` (基于 esbuild，零配置打出极致压缩的单文件二进制执行包)。
+- **包管理**: `pnpm` (支持 Workspace，为后续重构 Monorepo 铺路)。
+
+## 2. 核心命令与无感触发机制 (Invisible CLI)
+
+> **设计哲学：无感化 (Invisible CLI)**
+> 为了降低开发者的认知负担，aictx 的设计目标是“尽量不让人类主动敲命令”。绝大多数命令应由 AI 助手在工作流中自动调用，或通过 Git Hooks/NPM 脚本静默触发。人类只需在遇到冲突时介入。
+
+### 2.1 人类主动执行 (Human-Triggered)
+*这类命令通常只在项目初始化或开发者好奇时执行一次。*
+- `aictx init`: 智能初始化入口 (Smart Gateway)。执行时会弹出交互式向导，询问用户当前是“绿地项目(新)”还是“棕地项目(老)”：
+  - **分支 A (新项目)**: 生成基础 `aictx.json` 和空的 MOC 路由表模板（植入锚点）。
+  - **分支 B (存量老项目)**: 自动触发内部的 `onboard` (逆向工程) 子流程。**吸收 graphify 思想，采用“零大模型、纯本地确定性图谱”的终极接管方案：**
+    1. **静态结构探测 (0 Token)**: 极速解析 `package.json`、目录树、数据库 Schema 等结构化元数据。
+    2. **纯本地确定性 AST 解析 (Zero LLM/Zero VRAM)**: 检查并静默调用 `graphify` 引擎。利用其内置的 Tree-sitter 等确定性解析器遍历业务模块。极速提取出类的结构、函数出入参、API 路由签名、调用图 (Call Graph) 及注释，生成拓扑 JSON 图谱与审查报告。
+    3. **知识图谱格式化 (Data Transform)**: aictx-cli 充当统筹转换器。直接读取生成的 `graph.json`，从中提炼出 God Nodes (神级中枢节点)，并结合 `GRAPH_REPORT.md`，用纯 TypeScript 逻辑拼装成带有 aictx 规范的 YAML Frontmatter 的原子化 Markdown 规则文档。
+    4. **固化为 MOC 知识库**: 将转换后的系统架构红线，落盘至 `documents/architecture/system-graph.md`。实现 100% 覆盖率、零 Token 消耗、零算力门槛、绝对数据不出局的老代码无痛接管。
+- `aictx info`: 指标数据展示命令。在终端渲染图表，展示项目从接入以来节省的 Token 数量、规则更新次数以及核心防腐数据。（**按需查看价值面板**）
+
+### 2.2 AI 助手自动触发 (AI-Driven)
+*通过在 IDE (如 Trae) 的 System Prompt 中注入规则，强制 AI 在执行特定任务时调用这些命令，人类完全无需记忆。*
+- `aictx plan [feature]`: 工作流意图拦截。AI 在接到开发需求后、写代码前**自动调用**，生成临时变更意向书与执行清单，并暂停等待人类 Review。
+- `aictx apply`: 工作流执行与防腐同步。人类确认 `plan` 后，AI **自动调用**执行代码变更，并强制固化更新 Obsidian RAG 知识库，确保 SSOT。
+- `aictx index`: MOC 路由编译。当 AI 增删改了 `documents/` 下的 Markdown 文件后，**自动调用**以重构双向链接路由表。
+
+### 2.3 生命周期/钩子自动触发 (Hook-Driven)
+*通过工程化配置与现有开发生命周期绑定。*
+- `aictx sync`: 核心组装命令。触发状态机，拉取、组装并注入规则到本地 IDE 目录。（**推荐绑定 `package.json` 的 `postinstall` 钩子，或 IDE 启动钩子**）
+- `aictx doctor`: 诊断命令。检查本地规则是否发生 Drift (漂移/被篡改) 及 Token 消耗预估。（**推荐绑定 Git `pre-commit` 钩子**）
+- `aictx resolve`: 冲突消解命令。提供终端交互向导，引导团队合并或覆盖冲突的业务红线。（**仅当 `sync` 或 `doctor` 抛出冲突错误时，系统提示人类执行**）
+
+## 3. 状态机流转设计 (State Machine)
+整个 `sync` 命令遵循严格的 6 步生命周期：
+1. **Init**: 读取终端上下文，初始化日志和全局错误捕获。
+2. **Resolve**: 定位并解析 `aictx.json`，构建规则依赖图谱。
+3. **Fetch**: 从 Git/HTTP 或本地路径并行拉取 Rule 和 Skill 资产至 `~/.aictx-cache`。
+4. **Assemble**: 解析拉取到的 Markdown Frontmatter，依据 Tag 过滤掉不需要的规则（避免 Context Bloat）。
+5. **Inject**: 根据配置的适配器矩阵 (TraeAdapter, CursorAdapter, AntigravityAdapter, ClaudeAdapter 等)，将规则文件平铺覆写至目标项目的一个或多个对应目录。自动将组装后的 Rule 对象转换为对应 IDE 的目录结构（例如同一份 Rule 同步为 `.trae/rules/*.md`，并映射为 Claude Code 的 `.clauderc` 等）。
+6. **Report**: 打印终端高维日志，展示同步变更树 (Add/Update/Delete) 及 Token 预警，并附带本次同步创造的“价值感知”摘要（例如：“本次组装为您排除了 32 个无关规则，节省了约 45,000 Tokens”）。
+
+## 4. 目录结构规范 (Directory Structure)
+为了保障代码的扩展性和防腐性，项目源码采用如下分层架构：
+```text
+src/
+├── bin/           # CLI 执行入口 (cac 实例)
+├── commands/      # 指令逻辑 (init, sync, doctor)
+├── core/          # 核心引擎
+│   ├── fetcher/   # 多协议拉取器 (Git, Local)
+│   ├── assembler/ # 上下文组装器 (处理 gray-matter 解析和规则合并)
+│   ├── resolver/  # 冲突消解引擎 (处理 Entities/Tags 交集计算与引导)
+│   └── injector/  # 跨 IDE 适配器矩阵 (Trae, Cursor, Antigravity, Claude 策略模式写入)
+├── config/        # 配置文件解析与校验 (Schema Validation)
+├── utils/         # 终端 UI、日志、文件操作基建
+└── index.ts       # 统一导出
+```
+
+## 5. 发布与分发 (CI/CD)
+- **发布渠道**: 编译后作为独立包发布至 `npm Registry`。
+- **自动化流水线**: 采用 GitHub Actions 结合 Changesets 实现全自动语义化发版和 Changelog 生成。
+- **执行方式**: 
+  - 开发者通过 `npx aictx init` 免安装执行。
+  - 项目配置 `package.json` 中的 `scripts: { "postinstall": "aictx sync" }` 实现静默防腐同步。
+
+## [system-graph.md]
+
+---
+tags:
+  - aictx
+  - architecture
+  - generated
+aliases:
+  - [系统架构图谱, System Graph]
+entities:
+  - []
+roles:
+  - [AI Assistant]
+---
+# 系统架构拓扑审查 (System Architecture Report)
+
+> **Context as Code 自动生成**: 本文档由 `aictx onboard` 底层调用 `graphify` 纯本地 AST 引擎生成，**全程未经过任何 LLM 幻觉处理**，代表了代码库最真实、最准确的物理依赖关系 (Single Source of Truth)。
+
+## 核心业务节点 (God Nodes)
+系统运行的核心中枢，这些组件被大量其他模块调用，修改时必须极其谨慎。
+
+
+## 拓扑结构分析报告 (Topology Analysis)
+# Graph Report - .  (2026-04-08)
+
+## Corpus Check
+- 59 files · ~76,452 words
+- Verdict: corpus is large enough that graph structure adds value.
+
+## Summary
+- 359 nodes · 492 edges · 32 communities detected
+- Extraction: 67% EXTRACTED · 33% INFERRED · 0% AMBIGUOUS · INFERRED: 162 edges (avg confidence: 0.5)
+- Token cost: 0 input · 0 output
+
+## God Nodes (most connected - your core abstractions)
+1. `_make_id()` - 23 edges
+2. `_read_text()` - 16 edges
+3. `_extract_generic()` - 15 edges
+4. `detect()` - 10 edges
+5. `OnboardEngine` - 8 edges
+6. `_cross_file_surprises()` - 8 edges
+7. `_fetch_webpage()` - 8 edges
+8. `main()` - 8 edges
+9. `ingest()` - 7 edges
+10. `_is_file_node()` - 6 edges
+
+## Surprising Connections (you probably didn't know these)
+- None detected - all connections are within the same source files.
+
+## Communities
+
+### Community 0 - "Community 0"
+Cohesion: 0.04
+Nodes (74): _csharp_extra_walk(), extract(), extract_c(), extract_cpp(), extract_csharp(), extract_elixir(), _extract_generic(), extract_go() (+66 more)
+
+### Community 1 - "Community 1"
+Cohesion: 0.11
+Nodes (30): classify_file(), convert_office_file(), count_words(), detect(), detect_incremental(), docx_to_markdown(), extract_pdf_text(), FileType (+22 more)
+
+### Community 2 - "Community 2"
+Cohesion: 0.11
+Nodes (10): calculateHash(), ClaudeAdapter, ConfigParser, CursorAdapter, diagnoseDrift(), initI18n(), setLanguage(), TraeAdapter (+2 more)
+
+### Community 3 - "Community 3"
+Cohesion: 0.13
+Nodes (24): _cross_community_surprises(), _cross_file_surprises(), _file_category(), god_nodes(), graph_diff(), _is_concept_node(), _is_file_node(), _node_community_map() (+16 more)
+
+### Community 4 - "Community 4"
+Cohesion: 0.11
+Nodes (20): attach_hyperedges(), _cypher_escape(), _html_script(), _html_styles(), _hyperedge_script(), push_to_neo4j(), Store hyperedges in the graph's metadata dict., Escape a string for safe embedding in a Cypher single-quoted literal. (+12 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.16
+Nodes (21): _detect_url_type(), _download_binary(), _fetch_arxiv(), _fetch_html(), _fetch_tweet(), _fetch_webpage(), _html_to_markdown(), ingest() (+13 more)
+
+### Community 6 - "Community 6"
+Cohesion: 0.16
+Nodes (18): _agents_install(), _agents_uninstall(), build_graph(), _check_skill_version(), claude_install(), claude_uninstall(), install(), _install_claude_hook() (+10 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.18
+Nodes (16): cache_dir(), cached_files(), check_semantic_cache(), clear_cache(), file_hash(), load_cached(), Save semantic extraction results to cache, keyed by source_file.      Groups n, SHA256 of file contents + resolved path. Prevents cache collisions on identical (+8 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.17
+Nodes (13): _build_opener(), _NoFileRedirectHandler, Fetch *url* and return decoded text (UTF-8, replacing bad bytes).      Wraps s, Resolve *path* and verify it stays inside *base*.      *base* defaults to the, Strip control characters, cap length, then HTML-escape.      Applied to all no, Raise ValueError if *url* is not http or https, or targets a private/internal IP, Redirect handler that re-validates every redirect target.      Prevents open-r, Fetch *url* and return raw bytes.      Protections applied:     - URL scheme (+5 more)
+
+### Community 9 - "Community 9"
+Cohesion: 0.21
+Nodes (12): build_graph(), cluster(), cohesion_score(), _partition(), Community detection on NetworkX graphs. Uses Leiden (graspologic) if available,, Ratio of actual intra-community edges to maximum possible., Build a NetworkX graph from graphify node/edge dicts.      Preserves original, Run Leiden community detection. Returns {community_id: [node_ids]}.      Commu (+4 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.22
+Nodes (12): _git_root(), install(), _install_hook(), Remove graphify section from a git hook using start/end markers., Install graphify post-commit and post-checkout hooks in the nearest git repo., Remove graphify post-commit and post-checkout hooks., Check if graphify hooks are installed., Walk up to find .git directory. (+4 more)
+
+### Community 11 - "Community 11"
+Cohesion: 0.18
+Nodes (9): _communities_from_graph(), _find_node(), _load_graph(), Start the MCP server. Requires pip install mcp., Reconstruct community dict from community property stored on nodes., Render subgraph as text, cutting at token_budget (approx 3 chars/token)., Return node IDs whose label or ID matches the search term (case-insensitive)., serve() (+1 more)
+
+### Community 12 - "Community 12"
+Cohesion: 0.28
+Nodes (8): _estimate_tokens(), print_benchmark(), _query_subgraph_tokens(), Token-reduction benchmark - measures how much context graphify saves vs naive fu, Print a human-readable benchmark report., Run BFS from best-matching nodes and return estimated tokens in the subgraph con, Measure token reduction: corpus tokens vs graphify query tokens.      Args:, run_benchmark()
+
+### Community 13 - "Community 13"
+Cohesion: 0.28
+Nodes (7): build(), build_from_json(), Merge multiple extraction results into one graph.      Extractions are merged, assert_valid(), Validate an extraction JSON dict against the graphify schema.     Returns a lis, Raise ValueError with all errors if extraction is invalid., validate_extraction()
+
+### Community 14 - "Community 14"
+Cohesion: 0.36
+Nodes (8): _community_article(), _cross_community_links(), _god_node_article(), _index_md(), Return (community_label, edge_count) pairs for cross-community connections, sort, Generate a Wikipedia-style wiki from the graph.      Writes:       - index.md, _safe_filename(), to_wiki()
+
+### Community 15 - "Community 15"
+Cohesion: 0.36
+Nodes (1): OnboardEngine
+
+### Community 16 - "Community 16"
+Cohesion: 0.36
+Nodes (7): _has_non_code(), _notify_only(), Watch watch_path for new or modified files and auto-update the graph.      For, Re-run AST extraction + build + cluster + report for code files. No LLM needed., Write a flag file and print a notification (fallback for non-code-only corpora)., _rebuild_code(), watch()
+
+### Community 17 - "Community 17"
+Cohesion: 0.5
+Nodes (1): graphify - extract · build · cluster · analyze · report.
+
+### Community 18 - "Community 18"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 19 - "Community 19"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 20 - "Community 20"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 21 - "Community 21"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 22 - "Community 22"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 23 - "Community 23"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 24 - "Community 24"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 25 - "Community 25"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 26 - "Community 26"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 27 - "Community 27"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 28 - "Community 28"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 29 - "Community 29"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 30 - "Community 30"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 31 - "Community 31"
+Cohesion: 1.0
+Nodes (0): 
+
+## Knowledge Gaps
+- **126 isolated node(s):** `Graph analysis: god nodes (most connected), surprising connections (cross-commun`, `Invert communities dict: node_id -> community_id.`, `Return True if this node is a file-level hub node (e.g. 'client', 'models')`, `Return the top_n most-connected real entities - the core abstractions.      Fi`, `Find connections that are genuinely surprising - not obvious from file structure` (+121 more)
+  These have ≤1 connection - possible missing edges or undocumented components.
+- **Thin community `Community 18`** (2 nodes): `sync-graphify.js`, `sync()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 19`** (2 nodes): `doctor.ts`, `doctorCommand()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 20`** (2 nodes): `graph.ts`, `graphCommand()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 21`** (2 nodes): `info.ts`, `infoCommand()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 22`** (2 nodes): `resolve.ts`, `resolveCommand()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 23`** (2 nodes): `sync.ts`, `syncCommand()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 24`** (2 nodes): `report.py`, `generate()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 25`** (1 nodes): `tsup.config.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 26`** (1 nodes): `aictx.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 27`** (1 nodes): `en.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 28`** (1 nodes): `zh.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 29`** (1 nodes): `cli-ux.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 30`** (1 nodes): `assembler.test.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 31`** (1 nodes): `manifest.py`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+
+## Suggested Questions
+_Questions this graph is uniquely positioned to answer:_
+
+- **Why does `OnboardEngine` connect `Community 15` to `Community 2`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Are the 21 inferred relationships involving `_make_id()` (e.g. with `_import_python()` and `_import_js()`) actually correct?**
+  _`_make_id()` has 21 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 15 inferred relationships involving `_read_text()` (e.g. with `_resolve_name()` and `_import_python()`) actually correct?**
+  _`_read_text()` has 15 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 13 inferred relationships involving `_extract_generic()` (e.g. with `_make_id()` and `extract_python()`) actually correct?**
+  _`_extract_generic()` has 13 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 9 inferred relationships involving `detect()` (e.g. with `_load_graphifyignore()` and `str`) actually correct?**
+  _`detect()` has 9 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Graph analysis: god nodes (most connected), surprising connections (cross-commun`, `Invert communities dict: node_id -> community_id.`, `Return True if this node is a file-level hub node (e.g. 'client', 'models')` to the rest of the system?**
+  _126 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.04 - nodes in this community are weakly interconnected._
+
+## 约束建议 (AI Instructions)
+1. 在修改任何涉及上述 `God Nodes` 的代码前，必须优先查询调用链路。
+2. 本项目的基础架构强依赖于上述分析报告中的 Community 聚类关系，禁止跨社区发生循环依赖。
+
+
+## [00-Index.md]
+
+---
+tags:
+  - aictx
+  - moc
+  - product
+aliases:
+  - [product Index, 目录]
+entities:
+  - [MOC]
+roles:
+  - [Maintainer]
+---
+# Product Map of Content (MOC)
+
+> **路由表**: 这是 `product` 目录的核心索引文件。
+> AI 助手在寻找特定业务逻辑时，必须**优先且仅**读取此文件，并通过这里的双向链接（如 `[[xxx]]`）去跳转到对应的原子文档。**严禁使用全局检索**。
+
+## 📑 领域索引
+
+<!-- aictx-index-start -->
+
+| Doc Route (Bi-link) | Core Entities | Aliases | Description |
+| --- | --- | --- | --- |
+| [[aictx-产品需求文档(PRD)]] | `BaseRule,DomainRule,Skill` | `aictx 产品需求文档,Context as Code` | aictx 产品需求文档 (PRD) |
+| [[产品定义与核心愿景]] | `-` | `-` | 一、 产品定义与核心愿景 (Product Vision) |
+
+<!-- aictx-index-end -->
+
+## 📌 业务模块说明
+请在此处简要说明该目录下各原子文档的协作关系和业务边界。
+
+
 ## [aictx-产品需求文档(PRD).md]
 
 ---
@@ -20,11 +409,19 @@ roles:
 > **核心定位**: 一款面向 AI 辅助编程时代 (AI-Assisted Engineering) 的组织级上下文与研发规范管理 CLI。将 IaC 理念升级为 **Context as Code (CaC)**。
 
 ## 1. 业务目标与价值闭环 (Quote-to-Cash)
-- **痛点解决**: 消除 AI IDE/CLI (Trae, Cursor, Windsurf, Google Antigravity, Claude Code) 在多业务线并行时的上下文污染与“AI 幻觉”。降低外包/研发团队的知识传递成本与代码腐化率。
+- **核心痛点解决**: 传统开发团队在迈入 AI 编程阶段时，必定会遭遇“大模型自由发挥导致架构崩塌”的阵痛。无数团队为了让 AI 写出符合公司既有架构规范、API 风格和业务边界的代码，付出了巨大的试错成本（反复修改 Prompt、反复 Review 烂代码、甚至因为 AI 幻觉引发线上事故）。本项目旨在解决这一团队技术架构刚需：**“如何让团队里的 10 个甚至 100 个 AI 助手遵循同一种架构设计和业务红线，在降低 Token 消耗的同时，从根源上降低 AI 幻觉”**。
 - **商业化路径**:
-  - **第一阶段**: 开源 CLI 核心 `aictx`，定义全行业通用的“AI 项目规则目录标准”。
-  - **第二阶段**: 建立 Rule-Hub（AI 规则与技能分发市场），实现领域配置包共享。
-  - **第三阶段**: 面向外包公司或大厂效能团队，提供私有化 Meta-Repo 管理平台 (SaaS)，实现规范同步率的监控与 AI 资产沉淀。
+  - **第一阶段**: 开源 CLI 核心 `aictx`，定义全行业通用的“AI 项目 Context as Code 标准目录”。通过解决“团队 AI 架构一致性”这一最痛的刚需，占领开发者社区心智。
+  - **第二阶段**: 建立 Rule-Hub（AI 架构规则与技能分发市场），允许顶尖架构师共享针对特定技术栈的优质配置包。
+  - **第三阶段**: 面向中大型研发团队，提供企业级私有化 Context 治理平台 (SaaS)，实现公司技术宪法的可视化管理、监控各业务线 AI 规范的同步率与架构 Drift（漂移）情况。向进行 AI 转型的企业“卖护城河”。
+
+## 2. 存量项目接管策略 (Brownfield Onboarding Strategy)
+对于没有 `documents/` 知识库的庞大存量项目（占市场 90%），aictx 放弃了昂贵且易产生幻觉的大模型提取方案，转而采用 **“基于 Graphify (AST) 的确定性零模型提取方案”**：
+- **核心逻辑**: aictx-cli 静默调用底层 `graphify` 引擎，通过 Tree-sitter 在纯本地、零网络请求的情况下，遍历源码并提取出 100% 真实的物理调用图谱 (Call Graph) 和上帝节点 (God Nodes)。
+- **核心优势**: 
+  - **零 Token 成本**: 彻底告别大模型 API 账单。
+  - **绝对隐私合规**: 源码数据不上传、不离开本地，完美符合中大型企业的 SecOps 安全红线。
+  - **极速解析**: 10万行的屎山代码，几秒钟内即可梳理出核心业务边界并生成 `documents/architecture/system-graph.md` 规范。
 
 ## 2. 核心价值指标 (North Star Metrics)
 衡量该工具是否成功的核心指标，不是“执行速度有多快”，而是“组织级 AI 规范的渗透与防腐率”。具体包括：
@@ -70,111 +467,23 @@ roles:
 - **本地逃生舱 (Local Override)**: 提供 `.aiignore` 文件支持，允许开发者忽略特定的中央规则同步；同时支持在项目中创建 `local-override.md`，用于本地覆盖（优先级最高，且不会被 CLI 覆写）。
 - **依赖生命周期绑定**: 支持集成 npm/pnpm 的 `postinstall` 钩子，实现隐式同步。
 
+### 3.6 MOC 路由与防文档膨胀 (Map of Content)
+- **业务痛点**: 随着项目迭代，为了保持 SSOT 和防腐化，文档会急剧膨胀。如果把所有细节写在一个大文档里，会导致 AI 读取时 Token 爆炸；如果拆分成多个原子文档，AI 又很难找到它们，导致频繁调用昂贵的全局检索 (Global Search)。
+- **解决方案 (双管齐下)**:
+  - **Plan A (规范脚手架)**: 在 `aictx init` 时，自动在 `documents/` 下为用户生成 `00-Index.md` (或 `README.md`) 路由表模板。该模板内嵌 `<!-- aictx-index-start -->` 等标记。
+  - **Plan B (自动索引构建)**: 提供 `aictx index` 命令。该命令会扫描 `documents/` 下所有 Markdown 文件的 YAML Frontmatter（提取 `entities`, `description`, `aliases` 等），并自动生成带有双向链接 (`[[doc-name]]`) 的路由表格，精准注入到 `00-Index.md` 的标记位中。
+- **价值闭环**: 彻底干掉 AI 的“全局检索”行为。AI 只需要读取轻量级的 `00-Index.md`，就能顺藤摸瓜，通过双向链接精准读取所需的原子文档。既省 Token，又极大地提升了上下文命中的精确度。
+
+### 3.7 规范驱动的工作流拦截机制 (Spec-Driven Workflow Interceptor)
+- **业务痛点**: AI 助手在接到用户需求后，往往急于写代码（毛躁），导致写出的代码与全局架构或业务红线冲突。虽然市面上有 OpenSpec 等工具，但它们采用“用完即归档”的战术级管理，会导致知识库碎片化，无法形成全局统一的 SSOT（单一事实来源）。
+- **解决方案 (Context-Aware Planning)**: 吸收 Spec-Driven 的优秀理念，将其升级为“全局上下文感知的拦截器”。
+  - **意图拦截 (`aictx plan`)**: 当用户提出新需求时，AI 必须先生成一份临时变更计划（包含：本次修改涉及哪些全局 RAG 文档更新、Schema 变更预测、以及具体的任务拆解）。
+  - **人类确认 (Human-in-the-loop)**: 开发者 Review 变更计划，确保设计方向符合业务全局利益。
+  - **执行与防腐同步 (`aictx apply`)**: 确认后，AI 执行代码变更，**同时强制更新全局的 `documents/` 知识库和 `schema.prisma`**。我们不“归档（Archive）”临时文件，而是将变更固化到全局数字资产中，实现真正的 Context 迭代防腐。
+
 ## 4. 角色与权限 (RBAC)
 - **User (终端开发者)**: 消费者。通过 `npx aictx sync` 或被动钩子拉取规则，仅具有本地规则应用和**只读**权限。
 - **Maintainer (架构师)**: 生产者。在中央 Meta 仓库中定义并维护 `BaseRule` 和 `DomainRule`，掌控团队 AI 行为的“元规则”。
-
-## [产品定义与核心愿景.md]
-
-以下是客观、高维的 aictx 产品与市场定位梳理（完全体，不拆分 MVP）：
-
-### 一、 产品定义与核心愿景 (Product Vision)
-产品定义 ：
-这是一款面向 AI 辅助编程时代（AI-Assisted Engineering）的 组织级上下文与研发规范管理 CLI（Context & Rule Governance CLI） 。它本质上是将传统的“基础架构即代码（IaC）”理念，升级为**“AI 上下文即代码（Context as Code）”**。
-
-核心愿景 (Product Design Perspective) ：
-在当前的 AI IDE（如 Trae, Cursor）生态中，工具赋予了开发者极强的单兵作战能力，但随之而来的是“组织级规范失控”、“AI 幻觉频发”和“文档代码严重腐化”。
-该产品的愿景是成为**“连接团队方法论与本地 AI IDE 的中枢管道”**，解决多项目并行时的 AI 上下文污染问题。
-
-具体产品能力体现为：
-
-1. 模块化上下文组装 (Dynamic Context Assembly) ：将底层研发规范（如代码风格、RAG 写作标准）与特定业务领域规则（如物流、医美）解耦。通过 CLI 一键将两层规则按需合并、平铺注入本地，确保 AI 只获取当前项目所需的最优上下文（Top-tier Context），从根源杜绝跨项目幻觉。
-2. 规范的强制分发与同步 (Rule Distribution) ：通过集成包管理生命周期（如 postinstall 钩子），确保分布在不同设备、不同项目的开发者，其本地的 AI 约束规则始终与中央 Meta 仓库保持强一致性（SSOT）。
-3. AI 技能包管理 (Skill Registry) ：像 npm 管理代码依赖一样，管理和下发团队沉淀的“AI Skills”（自动化脚本、智能体动作），实现能力的跨项目复用。
-### 二、 市场定位与受众分析 (Market Positioning)
-1. 市场痛点洞察 (Market Gap)
-
-- 现状 ：目前市场上所有的 AI IDE 都在拼“大模型能力”和“自动补全速度”，但几乎没有工具在解决**“如何让团队里的 10 个 AI 助手遵循同一种架构设计和业务红线”**的问题。
-- 痛点 ：软件外包公司、定制化开发团队以及企业内部 IT 部门，在并行开发多个系统时，面临着极高的“知识传递成本”和“代码重构成本”。缺乏统一的规则注入，AI 生成的代码往往是“一次性”的，难以长期维护。
-2. 目标客户群体 (Target Audience)
-
-- 核心客群 ：中小型软件外包企业、IT 方案解决商（Software Agencies）。这类企业项目多、人员流动快、急需标准化流水线来压缩成本。
-- 次级客群 ：大型企业的研发效能部门（DevOps / Platform Engineering Teams），用于统一集团内部的 AI 编码规范。
-3. 商业化路径与生态卡位 (Go-to-Market Strategy) 该产品不仅是一个提效基建，更是一个极具潜力的 B2B DevTool。其市场推演路径如下：
-
-- 第一阶段（开源与标准制定） ：将 CLI 核心逻辑（ aictx ）开源，定义出一种全行业通用的“AI 项目规则目录标准”（类似于前端的 package.json ）。通过开发者社区的口碑传播，占领“AI 研发规范化”的用户心智。
-- 第二阶段（规则集市场 Rule-Hub） ：建立一个类似于 Docker Hub 或 npm 的“AI 规则与技能分发市场”。允许开发者共享针对特定领域（如电商、SaaS、Web3）的 .trae 优质配置包。
-- 第三阶段（企业级 SaaS 变现） ：为外包公司或大型企业提供私有化的 Meta-Repo 管理平台（SaaS） 。在这个平台上，企业可以可视化地管理公司宪法、监控各个项目组规则的同步率、分析 AI Skills 的使用效能。 （这才是终极的商业闭环：向使用 AI 的企业“卖管理铲子”）。
-
-
-总结： 从产品和市场角度来看，它绝不是一个“特定业务（大巴/医美）的辅助工具”，而是一个**“AI 时代软件工程标准化的基础设施”**。它踩中了当下 AI 编程工具“重个体赋能、轻组织治理”的市场空白。
-
-## [aictx-技术架构设计.md]
-
----
-tags:
-  - aictx
-  - 技术架构
-aliases:
-  - [aictx 技术架构设计, Architecture]
-entities:
-  - [ContextAssembler, Fetcher, Injector]
-roles:
-  - [Developer]
----
-# aictx 技术架构设计 (Architecture)
-
-> **设计准则**: 极速冷启动、零环境侵入、跨平台兼容、终端交互优雅。
-
-## 1. 技术栈选型 (Tech Stack)
-- **开发语言**: `TypeScript` (强类型，Node 生态契合度最高)。
-- **CLI 框架**: `cac` (极轻量级，性能远优于 commander，适合 DevTool)。
-- **交互与 UI**: `@clack/prompts` (无感知、现代化的终端交互组件) + `picocolors` (终端着色) + `consola` (日志分级)。
-- **文件与解析**: 
-  - `fs-extra` (增强型文件系统操作)。
-  - `gray-matter` (高效解析 Markdown 的 YAML Frontmatter)。
-  - `tiktoken` / 字符估算算法 (用于快速预估 Token 消耗，防止 Context Bloat)。
-- **构建与打包**: `tsup` (基于 esbuild，零配置打出极致压缩的单文件二进制执行包)。
-- **包管理**: `pnpm` (支持 Workspace，为后续重构 Monorepo 铺路)。
-
-## 2. 核心命令设计 (CLI Commands)
-- `aictx init`: 初始化 aictx 配置。交互式询问用户所使用的 IDE/CLI (Trae/Cursor/Antigravity/Claude，支持多选并行)，并在项目根目录生成 `aictx.json`。
-- `aictx sync`: 核心命令。触发执行状态机，拉取、组装并注入规则到本地 IDE 目录。执行完毕后，自动打印“价值感知面板 (Value Dashboard)”。
-- `aictx doctor`: 诊断命令。检查本地规则是否发生 Drift (漂移/被篡改)，并计算当前注入规则的 Token 消耗预估。
-- `aictx resolve`: 冲突监测与消解命令。通过解析 Markdown 的 `entities` / `tags` 交集预估规则重叠度，结合 `@clack/prompts` 提供交互式向导，引导团队手动合并或覆盖冲突的业务红线，确保 SSOT。
-- `aictx info`: 指标数据展示命令。在终端渲染图表，展示项目从接入以来节省的 Token 数量、规则更新次数以及核心防腐数据。
-
-## 3. 状态机流转设计 (State Machine)
-整个 `sync` 命令遵循严格的 6 步生命周期：
-1. **Init**: 读取终端上下文，初始化日志和全局错误捕获。
-2. **Resolve**: 定位并解析 `aictx.json`，构建规则依赖图谱。
-3. **Fetch**: 从 Git/HTTP 或本地路径并行拉取 Rule 和 Skill 资产至 `~/.aictx-cache`。
-4. **Assemble**: 解析拉取到的 Markdown Frontmatter，依据 Tag 过滤掉不需要的规则（避免 Context Bloat）。
-5. **Inject**: 根据配置的适配器矩阵 (TraeAdapter, CursorAdapter, AntigravityAdapter, ClaudeAdapter 等)，将规则文件平铺覆写至目标项目的一个或多个对应目录。自动将组装后的 Rule 对象转换为对应 IDE 的目录结构（例如同一份 Rule 同步为 `.trae/rules/*.md`，并映射为 Claude Code 的 `.clauderc` 等）。
-6. **Report**: 打印终端高维日志，展示同步变更树 (Add/Update/Delete) 及 Token 预警，并附带本次同步创造的“价值感知”摘要（例如：“本次组装为您排除了 32 个无关规则，节省了约 45,000 Tokens”）。
-
-## 4. 目录结构规范 (Directory Structure)
-为了保障代码的扩展性和防腐性，项目源码采用如下分层架构：
-```text
-src/
-├── bin/           # CLI 执行入口 (cac 实例)
-├── commands/      # 指令逻辑 (init, sync, doctor)
-├── core/          # 核心引擎
-│   ├── fetcher/   # 多协议拉取器 (Git, Local)
-│   ├── assembler/ # 上下文组装器 (处理 gray-matter 解析和规则合并)
-│   ├── resolver/  # 冲突消解引擎 (处理 Entities/Tags 交集计算与引导)
-│   └── injector/  # 跨 IDE 适配器矩阵 (Trae, Cursor, Antigravity, Claude 策略模式写入)
-├── config/        # 配置文件解析与校验 (Schema Validation)
-├── utils/         # 终端 UI、日志、文件操作基建
-└── index.ts       # 统一导出
-```
-
-## 5. 发布与分发 (CI/CD)
-- **发布渠道**: 编译后作为独立包发布至 `npm Registry`。
-- **自动化流水线**: 采用 GitHub Actions 结合 Changesets 实现全自动语义化发版和 Changelog 生成。
-- **执行方式**: 
-  - 开发者通过 `npx aictx init` 免安装执行。
-  - 项目配置 `package.json` 中的 `scripts: { "postinstall": "aictx sync" }` 实现静默防腐同步。
 
 ## [aictx-开发计划与TODO.md]
 
@@ -227,6 +536,10 @@ roles:
 - [x] **P2.3 `config` 解析引擎实现**
   - [x] 编写 ConfigParser，读取并校验项目目录下的 `aictx.json`。
   - [x] 支持本地配置与默认缺省配置的 Merge。
+- [ ] **P2.4 多语言支持 (i18n)**
+  - [ ] 搭建 `src/locales` 轻量级字典 (中/英)。
+  - [ ] 在 `init` 流程增加语言选择向导。
+  - [ ] 重构所有 CLI 命令以接入多语言字典。
 
 ---
 
@@ -266,11 +579,30 @@ roles:
 ## 🎯 Phase 5: CI/CD 与开源分发 (Release & Distribution)
 *目标：完成项目的打磨，推向开源社区。*
 
-- [ ] **P5.1 完善测试覆盖率**
-  - [ ] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
-- [ ] **P5.2 NPM 打包与发布**
-  - [ ] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
-  - [ ] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
-- [ ] **P5.3 开源布道支持**
-  - [ ] 补充具体的 Rule 范例 (Examples 目录)。
-  - [ ] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。
+- [x] **P5.1 完善测试覆盖率**
+  - [x] 引入 `vitest` 或 `jest`，对 Assembler 和 Fetcher 进行核心逻辑单测。
+- [x] **P5.2 NPM 打包与发布**
+  - [x] 配置 `package.json` 的 `bin` 字段和 `files` 白名单。
+  - [x] 编写 GitHub Actions 流水线，实现基于 Git Tag 的自动 NPM 发版。
+- [x] **P5.3 开源布道支持**
+  - [x] 补充具体的 Rule 范例 (Examples 目录)。
+  - [x] 在 README 中增加录屏 GIF (Asciinema) 展示交互流程。
+
+---
+
+## 🎯 Phase 6: MOC 路由与防文档膨胀 (Map of Content)
+*目标：通过引入标准目录和自动索引，彻底解决 AI 全局检索带来的 Token 消耗和幻觉问题。*
+
+- [x] **P6.1 MOC 脚手架模板 (`init`)**
+  - [x] 更新 `aictx init` 命令，在生成标准目录时，自动创建 `00-Index.md` 或 `README.md` 路由表模板。
+  - [x] 模板中预置 `<!-- aictx-index-start -->` 和 `<!-- aictx-index-end -->` 锚点。
+- [x] **P6.2 自动索引构建引擎 (`index`)**
+  - [x] 注册全新的 `aictx index` 命令。
+  - [x] 扫描 `documents/` 下的所有 Markdown，解析 YAML Frontmatter (`entities`, `description`, `aliases`)。
+  - [x] 自动生成带有双向链接 `[[xxx]]` 的 Markdown 表格。
+  - [x] 将生成的表格精准覆写到 MOC 模板的锚点位置。
+- [x] **P6.3 国际化与规范更新**
+  - [x] 为 `index` 命令添加中英文 i18n 翻译。
+  - [x] 更新 `.trae/rules`，教导 AI 优先读取 `00-Index.md` 并顺藤摸瓜，严禁使用全局检索。
+- [x] **P6.4 验证与集成测试**
+  - [x] 编写测试用例验证索引生成的准确性和锚点替换的安全性。

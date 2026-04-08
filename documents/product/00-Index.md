@@ -21,8 +21,7 @@ roles:
 
 | Doc Route (Bi-link) | Core Entities | Aliases | Description |
 | --- | --- | --- | --- |
-| [[aictx-产品需求文档(PRD)]] | `BaseRule,DomainRule,Skill` | `aictx 产品需求文档,Context as Code` | aictx 产品需求文档 (PRD) |
-| [[产品定义与核心愿景]] | `-` | `-` | 一、 产品定义与核心愿景 (Product Vision) |
+| [[aictx-产品需求文档(PRD)]] | `Context Assembler,Zero-LLM,MOC` | `aictx-cli PRD,产品需求文档` | aictx-cli 产品需求文档 (PRD) |
 
 <!-- aictx-index-end -->
 
