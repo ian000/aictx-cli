@@ -1,4 +1,6 @@
 import { defineConfig } from 'tsup'
+import fs from 'fs-extra'
+import path from 'path'
 
 export default defineConfig({
   entry: ['src/bin/aictx.ts'],
@@ -10,4 +12,7 @@ export default defineConfig({
   splitting: true,
   sourcemap: false,
   outDir: 'dist',
+  async onSuccess() {
+    await fs.copy('src/templates', 'dist/templates', { overwrite: true })
+  }
 })

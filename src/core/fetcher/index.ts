@@ -9,9 +9,10 @@ export async function fetchRules(repository: string | undefined, cacheDir: strin
     // 采用内置模板 (Builtin fallback)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    // Depending on tsup config, aictx.js is in dist/aictx.js
-    // templates are in dist/../templates
-    const templatesDir = path.resolve(__dirname, '../templates/.trae/rules');
+    
+    // 兼容开发环境和 tsup 打包后的环境
+    const isDist = __dirname.endsWith('dist');
+    const templatesDir = path.resolve(__dirname, isDist ? 'templates/.trae/rules' : '../../templates/.trae/rules');
     
     if (fs.existsSync(templatesDir)) {
       // Empty the cache dir first

@@ -141,9 +141,9 @@ _运行 \`aictx index\` 自动生成路由表_
       if (ides.includes('trae')) {
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
-        // __dirname is usually 'dist' or 'dist/commands' depending on tsup config.
-        // Assuming it's 'dist', the templates are in '../templates/.trae/skills'
-        const templatesDir = path.resolve(__dirname, '../templates/.trae/skills');
+        // __dirname is usually 'dist' (when bundled) or 'src/commands' (in dev).
+        const isDist = __dirname.endsWith('dist');
+        const templatesDir = path.resolve(__dirname, isDist ? 'templates/.trae/skills' : '../templates/.trae/skills');
         const targetSkillsDir = path.resolve(process.cwd(), '.trae/skills');
         
         if (fs.existsSync(templatesDir)) {
@@ -169,8 +169,14 @@ _运行 \`aictx index\` 自动生成路由表_
         });
       } catch (e) {
         try {
+          const __filename = fileURLToPath(import.meta.url);
+          const __dirname = path.dirname(__filename);
+          const isDist = __dirname.endsWith('dist');
+          const cliPath = isDist ? path.resolve(__dirname, 'aictx.js') : path.resolve(__dirname, '../bin/aictx.ts');
+          
           const { execa } = await import('execa');
-          await execa('node', [path.resolve(__dirname, '../aictx.js'), 'sync'], {
+          // In dev mode (src/commands), we should technically use ts-node or similar, but this fallback is usually hit in dist mode
+          await execa('node', [cliPath, 'sync'], {
             cwd: process.cwd(),
             stdio: 'inherit'
           });

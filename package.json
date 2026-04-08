@@ -1,6 +1,6 @@
 {
   "name": "aictx-cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Context as Code (CaC) CLI for AI-Assisted Engineering",
   "type": "module",
   "bin": {
@@ -8,8 +8,7 @@
   },
   "files": [
     "dist",
-    "vendor",
-    "templates"
+    "vendor"
   ],
   "scripts": {
     "build": "tsup",
@@ -38,10 +37,11 @@
   "dependencies": {
     "@clack/prompts": "^1.2.0",
     "cac": "^7.0.0",
-    "consola": "^3.4.2",
-    "execa": "^9.6.1",
+    "consola": "^3.2.3",
+    "execa": "^8.0.1",
     "fs-extra": "^11.3.4",
     "globby": "^16.2.0",
+    "graphify-go": "^1.0.0",
     "gray-matter": "^4.0.3",
     "ollama": "^0.6.3",
     "picocolors": "^1.1.1",
