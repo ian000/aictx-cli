@@ -19,10 +19,10 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure built for the AI-Assisted Programming era. Think of it as a high-precision "external brain navigator" for Large Language Models (LLMs).
+**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure built for the AI-Assisted Programming era (Trae, Cursor, Windsurf, OpenCode, Claude Code, etc.). It represents a unique implementation of the emerging **"Harness Engineering"** philosophy. Think of it as a high-precision "external brain navigator" for Large Language Models (LLMs).
 
 We are dedicated to providing three core infrastructure capabilities for the AI-Assisted Programming era:
-1. **🌍 Cross-Device & Cross-IDE Sync**: Whether you use Cursor, Trae, or Windsurf, a single set of architecture Rules and local Skills can be compiled and dynamically injected into all your terminals with one click, completely ending the disaster of "different AIs writing in different styles."
+1. **🌍 Cross-Device & Cross-IDE Sync**: Whether you use Trae, Cursor, Windsurf, OpenCode, or Claude Code, a single set of architecture Rules and local Skills can be compiled and dynamically injected into all your terminals with one click, completely ending the disaster of "different AIs writing in different styles."
 2. **💰 Extreme Cost Reduction & Anti-Hallucination**: Stop making AI blindly read hundreds of thousands of lines of legacy code. The pure local AST engine extracts highly concentrated physical topology summaries. Combined with the MOC (Map of Content) bi-directional routing, Token consumption drops by 90%, eliminating AI hallucinations at the source.
 3. **🛡️ Architecture Anti-Corruption & Red-Line Blocking**: Codify your business boundaries and core logic. When the new prompt received by the IDE conflicts with the existing system architecture, it automatically triggers a "business red line" soft interception or hard block, forcing the AI to correct the plan or synchronously update the documentation, ensuring the project evolution does not corrupt.
 
@@ -44,7 +44,7 @@ aictx breaks this deadlock, bringing immediate efficiency leaps to both **indivi
 Completely abandons the inefficient and expensive "global search" or "full RAG" approach of traditional AI tools. aictx's built-in MOC routing mechanism based on Markdown Frontmatter allows LLMs to navigate precisely to required atomic documents by simply reading a lightweight index table of a few dozen lines. **Reduces long-context Token consumption by 80% while achieving a "low-cost, zero-hallucination" precise context feed.**
 
 ### 🧑‍💻 For Individual Developers (Individual)
-- **Say Goodbye to "Explaining to AI"**: No more pasting lengthy Prompts or manually attaching tons of documents every time you open Trae / Cursor / Claude Code. Run `aictx sync`, and the IDE instantly "gets you," slashing communication costs by 40%.
+- **Say Goodbye to "Explaining to AI"**: No more pasting lengthy Prompts or manually attaching tons of documents every time you open Trae, Cursor, Windsurf, OpenCode, or Claude Code. Run `aictx sync`, and the IDE instantly "gets you," slashing communication costs by 40%.
 - **Out of the Box, Zero Intrusion**: Mount AI armor onto your project with a single command, completely without polluting your existing business logic.
 
 ### 🏢 For R&D Teams (Team)
@@ -124,7 +124,7 @@ aictx is committed to becoming the standard infrastructure for the AI-Assisted E
   - Support multi-source rule fetching (Git, Local, HTTP)
   - AST-level project feature sniffing & dynamic Context injection
 - [ ] **Phase 3: Deep IDE & Workflow Integration**
-  - Seamless Trae / Cursor plugin mounting
+  - Seamless Trae / Cursor / Windsurf / OpenCode / Claude Code plugin mounting
   - CI/CD pipeline interception and gating
 
 ## 🤝 Contributing
