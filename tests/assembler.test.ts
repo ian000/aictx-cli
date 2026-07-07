@@ -39,9 +39,9 @@ tags:
 This is a global common rule.
 `);
 
-    // 4. 无 tag 的规则 (默认匹配)
+    // 4. 无 tag 的规则 (应被忽略)
     await fs.writeFile(path.join(TEST_DIR, 'rule-notag.md'), `# No Tag Rule
-This rule has no tags and should be matched by default.
+This rule has no tags and should be ignored.
 `);
   });
 
@@ -50,29 +50,29 @@ This rule has no tags and should be matched by default.
     await fs.remove(TEST_DIR);
   });
 
-  it('should assemble all rules if project tags are empty', async () => {
+  it('should only assemble tagged rules if project tags are empty', async () => {
     const result = await assembleRules(TEST_DIR, []);
     
     expect(result.stats.totalScanned).toBe(4);
-    expect(result.stats.matchedRules).toBe(4);
-    expect(result.stats.ignoredRules).toBe(0);
-    expect(result.rules.length).toBe(4);
+    expect(result.stats.matchedRules).toBe(3);
+    expect(result.stats.ignoredRules).toBe(1);
+    expect(result.rules.length).toBe(3);
   });
 
   it('should filter rules based on project tags (frontend)', async () => {
     const result = await assembleRules(TEST_DIR, ['frontend']);
     
     expect(result.stats.totalScanned).toBe(4);
-    // 应该匹配: frontend, common, notag
-    // 应该忽略: backend
-    expect(result.stats.matchedRules).toBe(3);
-    expect(result.stats.ignoredRules).toBe(1);
+    // 应该匹配: frontend, common
+    // 应该忽略: backend, notag
+    expect(result.stats.matchedRules).toBe(2);
+    expect(result.stats.ignoredRules).toBe(2);
     
     const matchedFilenames = result.rules.map(r => r.filename);
     expect(matchedFilenames).toContain('rule-frontend.md');
     expect(matchedFilenames).toContain('rule-common.md');
-    expect(matchedFilenames).toContain('rule-notag.md');
     expect(matchedFilenames).not.toContain('rule-backend.md');
+    expect(matchedFilenames).not.toContain('rule-notag.md');
   });
 
   it('should correctly parse frontmatter metadata', async () => {
@@ -89,8 +89,7 @@ This rule has no tags and should be matched by default.
   it('should calculate tokens roughly', async () => {
     const result = await assembleRules(TEST_DIR, []);
     expect(result.stats.matchedTokens).toBeGreaterThan(0);
-    // rule-notag.md 长度约 75，token 估算约 113
-    const notagRule = result.rules.find(r => r.filename === 'rule-notag.md');
-    expect(notagRule?.tokens).toBeGreaterThan(50);
+    const commonRule = result.rules.find(r => r.filename === 'rule-common.md');
+    expect(commonRule?.tokens).toBeGreaterThan(20);
   });
 });

@@ -10,6 +10,7 @@ import { infoCommand } from '../commands/info.js';
 import { indexCommand } from '../commands/index.js';
 import { graphCommand } from '../commands/graph.js';
 import { initI18n } from '../locales/index.js';
+import pkg from '../../package.json';
 
 // 强制设置 Node.js 在控制台输出的默认编码为 UTF-8
 if (process.stdout.setDefaultEncoding) {
@@ -40,7 +41,7 @@ indexCommand(cli as any);
 graphCommand(cli as any);
 
 cli.help();
-cli.version('1.0.0');
+cli.version(pkg.version);
 
 (async () => {
   await initI18n();

@@ -69,7 +69,7 @@ export const syncCommand = (cli: any) => {
 
         // 检查是否有专属业务规则
         const projectName = path.basename(cwd);
-        const hasDomainRules = result.rules.some(r => r.name && r.name.includes(projectName));
+        const hasDomainRules = result.rules.some((rule) => rule.filename.includes(projectName));
         
         // 我们将是否包含 domain rule 的状态写入到一个临时文件里，供外层 onboard 读取
         const statusPath = path.resolve(cwd, '.aictx-sync-status.json');

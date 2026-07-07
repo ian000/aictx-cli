@@ -3,13 +3,13 @@ import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
 import { globby } from 'globby';
-import { execa } from 'execa';
 import { cliUX } from '../../utils/cli-ux.js';
 import { fileURLToPath } from 'url';
 import { ConfigParser } from '../../config/index.js';
 import { fetchRules } from '../fetcher/index.js';
 import { assembleRules } from '../assembler/index.js';
 import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../injector/index.js';
+import { analyzeWithGraphify } from '../../utils/graphify.js';
 
 export interface OnboardOptions {
   cwd: string;
@@ -70,11 +70,12 @@ export class OnboardEngine {
     
     const startTime = Date.now();
     try {
-      // 通过 graphify-go 内部接口去执行 AST
-      const { graphify } = await import('graphify-go');
-      // 注意：graphify-go 命令的参数是 `-dir` 和 `-out`
       consola.start('正在启动 Graphify-Go 纯本地引擎进行代码逆向...');
-      const output = await graphify(['-dir', this.options.cwd, '-out', path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out')]);
+      await analyzeWithGraphify(
+        this.options.cwd,
+        path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out'),
+        { cwd: this.options.cwd, stdio: 'inherit' }
+      );
       consola.success('Graphify-Go 逆向分析完成！');
     } catch (e: any) {
       sAst.stop('提取失败');
@@ -166,9 +167,9 @@ ${rawReport}
 
     const skillDir = path.resolve(this.options.cwd, '.trae/skills/aictx-graphify');
     await fs.ensureDir(skillDir);
-    const skillContent = `---
+const skillContent = `---
 name: "aictx-graphify"
-description: "Query the local Graphify AST knowledge graph. Invoke IMMEDIATELY when the user asks about project architecture, dependencies, codebase structure, code connections, or module relationships."
+description: "Inspect the local Graphify AST knowledge graph artifacts. Invoke when the user asks about project architecture, dependencies, codebase structure, code connections, or module relationships."
 ---
 
 # Graphify Knowledge Graph Assistant
@@ -181,24 +182,28 @@ This project has been onboarded with \`aictx\` and has a local AST knowledge gra
 - To find "God Nodes" (highly connected components) or "Surprising Connections".
 
 ## How to Use
-You can query the knowledge graph using the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
+Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
 
-1. **Query the Graph:**
+1. **Rebuild the Graph Artifacts:**
    \`\`\`bash
-   aictx graph query "<your_question>"
-   \`\`\`
-   *(Example: \`aictx graph query "how does user authentication work?"\`)*
-
-2. **DFS Query:**
-   \`\`\`bash
-   aictx graph query "<your_question>" --dfs
+   aictx graph analyze --dir . --out aictx-docs/architecture/graphify-out
    \`\`\`
 
-3. **Read the Report:**
+2. **Print a Fresh Markdown Summary to stdout:**
+   \`\`\`bash
+   aictx graph print --dir . --format markdown
+   \`\`\`
+
+3. **Print the Raw JSON Graph to stdout:**
+   \`\`\`bash
+   aictx graph print --dir . --format json
+   \`\`\`
+
+4. **Read the Report:**
    Read \`aictx-docs/architecture/system-graph.md\` or \`aictx-docs/architecture/graphify-out/system-graph.md\` for god nodes and community structure before searching raw files.
 
-4. **Rebuild the Graph:**
-   If you significantly modify code files in this session, run \`aictx graph . --no-viz\` to keep the graph current.
+5. **Inspect Specific Symbols:**
+   Search for symbol names inside \`aictx-docs/architecture/graphify-out/graph.json\` before broad raw-file search.
 `;
     await fs.writeFile(path.resolve(skillDir, 'SKILL.md'), skillContent);
 

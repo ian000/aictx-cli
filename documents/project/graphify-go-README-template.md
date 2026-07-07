@@ -2,7 +2,7 @@
 
 **The blazing-fast, zero-dependency AST extractor and code relationship graph builder.**
 
-A 1:1 Go rewrite of the original Python `graphify` engine, designed specifically to serve as the ultra-fast backend for [aictx-cli](https://github.com/kings2017/aictx-cli).
+A 1:1 Go rewrite of the original Python `graphify` engine, designed specifically to serve as the ultra-fast backend for [aictx-cli](https://github.com/ian000/aictx-cli).
 
 ## 💡 Why Rewrite in Go?
 
@@ -42,7 +42,7 @@ Phase 1 MVP targets:
 
 ### Setup
 ```bash
-git clone https://github.com/kings2017/graphify-go.git
+git clone https://github.com/ian000/graphify-go.git
 cd graphify-go
 go mod download
 ```
