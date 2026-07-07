@@ -1,6 +1,6 @@
 {
   "name": "aictx-cli",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Context as Code (CaC) CLI for AI-Assisted Engineering",
   "type": "module",
   "bin": {
@@ -34,6 +34,9 @@
   ],
   "author": "ian000",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "bugs": {
     "url": "https://github.com/ian000/aictx-cli/issues"
   },
