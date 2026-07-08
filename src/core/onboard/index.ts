@@ -11,6 +11,7 @@ import { assembleRules } from '../assembler/index.js';
 import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../injector/index.js';
 import { analyzeWithGraphify } from '../../utils/graphify.js';
 import { ensureCodexWorkspace } from '../codex/index.js';
+import { runCurrentAictxCommand } from '../../utils/self-cli.js';
 
 export interface OnboardOptions {
   cwd: string;
@@ -62,9 +63,6 @@ export class OnboardEngine {
     // 因为 aictx graph 内部已经实现了黑盒代理调用
     
     // Map 阶段：AST 纯本地提取 (Zero LLM)
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    
     consola.info(`\n${pc.bgBlue(' AST EXTRACTION PHASE ')} 开始调用 Graphify 进行全项目 AST 解析...`);
     const sAst = cliUX.createSpinner();
     sAst.start('正在生成 Call Graph 与实体拓扑图 (Zero LLM/Zero VRAM)...');
@@ -241,27 +239,14 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     }
     
     // 强制执行一次 Sync (代替手动拷贝内置规则)
-      sTrans.start('正在自动触发 aictx sync 拉取并释放规则...');
-      try {
-        const { execa } = await import('execa');
-        await execa('npx', ['aictx', 'sync'], { 
-          cwd: this.options.cwd,
-          stdio: 'inherit' // 让 sync 的输出直接打印到控制台
-        });
-      } catch (e) {
-        // 如果 npx 找不到全局 aictx，尝试直接调用当前代码编译出的二进制
-        try {
-          const { execa } = await import('execa');
-          const cliPath = __dirnamePath.endsWith('dist') ? path.resolve(__dirnamePath, 'aictx.js') : path.resolve(__dirnamePath, '../aictx.js');
-          await execa('node', [cliPath, 'sync'], {
-            cwd: this.options.cwd,
-            stdio: 'inherit'
-          });
-        } catch (e2) {
-          console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e2 as Error).message}`));
-        }
-      }
+    sTrans.start('正在自动触发 aictx sync 拉取并释放规则...');
+    try {
+      await runCurrentAictxCommand(['sync'], this.options.cwd);
       sTrans.stop('自动 aictx sync 规则下发完成！');
+    } catch (e) {
+      sTrans.stop('自动 aictx sync 触发失败');
+      console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e as Error).message}`));
+    }
 
     console.log('\n======================================================================');
     console.log(`🎉 基于纯本地 AST 图谱的逆向工程 (Onboarding) 成功完成！`);

@@ -85,6 +85,18 @@ aictx init --onboard
 ```
 *老项目会自动进行零模型 AST 提取，并生成 IDE 引导上帝提示词 (God Prompt)。*
 
+如果你已经有 PRD 和技术架构文档，可以直接基于现有输入快速建项：
+```bash
+aictx init --from-prd ./docs/prd.md --from-arch ./docs/tech-stack.md
+```
+
+如果暂时只有 PRD，但已经明确技术选型，也可以直接传入技术架构摘要：
+```bash
+aictx init --from-prd ./docs/prd.md --arch "Frontend Vue 3 + Vite，Backend NestJS，DB PostgreSQL，Deploy Docker Compose + Nginx"
+```
+
+CLI 会把这些输入自动导入到 `aictx-docs/product`、`aictx-docs/architecture`，并在 `aictx-docs/project` 下生成一份 bootstrap TODO，供 AI 后续直接开始拆解与搭架子。
+
 ### 3. 一键同步你的 AI 大脑
 
 拉取并动态注入最新的上下文规范到当前 IDE：

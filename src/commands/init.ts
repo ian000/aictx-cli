@@ -1,11 +1,12 @@
 import { defineCommand } from 'cac';
-import { consola } from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
-import { cliUX } from '../utils/cli-ux.js';
 import { fileURLToPath } from 'url';
+import { cliUX } from '../utils/cli-ux.js';
 import { ensureCodexWorkspace } from '../core/codex/index.js';
+import { scaffoldBootstrapArtifacts } from '../core/init/bootstrap.js';
+import { runCurrentAictxCommand } from '../utils/self-cli.js';
 
 export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
   cli.command('init', '初始化 aictx 配置')
@@ -13,6 +14,9 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
     .option('-y, --yes', '跳过所有确认提示')
     .option('--repo <url>', '指定 Meta-Repo 地址 (跳过交互)')
     .option('--ide <ide>', '指定 IDE (如 codex/trae, 跳过交互)')
+    .option('--from-prd <path>', '导入现有 PRD / 产品文档文件或目录')
+    .option('--from-arch <path>', '导入现有技术架构 / 技术栈文档文件或目录')
+    .option('--arch <text>', '直接提供技术架构摘要，生成架构种子文档')
     .action(async (options) => {
       cliUX.intro('初始化 Context as Code 基础设施');
       const defaultIdes = ['codex'];
@@ -75,6 +79,72 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
         ) as string;
       }
 
+      let fromPrd = options.fromPrd as string | undefined;
+      let fromArch = options.fromArch as string | undefined;
+      let archSummary = options.arch as string | undefined;
+
+      if (!options.yes && !fromPrd && !fromArch && !archSummary) {
+        const shouldImportExistingDocs = await cliUX.askConfirm(
+          '是否基于现有 PRD / 技术架构文档快速初始化项目？',
+          false
+        );
+
+        if (shouldImportExistingDocs) {
+          fromPrd = (await cliUX.askText(
+            '请输入现有 PRD 或产品文档路径 (可留空跳过)',
+            './docs/prd.md',
+            ''
+          )) as string;
+          fromPrd = fromPrd.trim() || undefined;
+
+          const archSourceMode = await cliUX.askSelect(
+            '请选择技术架构输入方式',
+            [
+              { value: 'doc', label: '导入现有技术架构文档', hint: '如 tech-stack.md / architecture.md / docs/tech' },
+              { value: 'summary', label: '直接填写技术架构摘要', hint: '适合先定义前后端、数据库、部署与中间件约束' },
+              { value: 'skip', label: '暂不提供', hint: '只导入 PRD，并在 bootstrap TODO 中提示补齐' }
+            ]
+          ) as string;
+
+          if (archSourceMode === 'doc') {
+            fromArch = (await cliUX.askText(
+              '请输入技术架构文档路径',
+              './docs/tech-stack.md'
+            )) as string;
+            fromArch = fromArch.trim() || undefined;
+          } else if (archSourceMode === 'summary') {
+            archSummary = (await cliUX.askText(
+              '请输入技术架构摘要',
+              '例如: Frontend Vue 3 + Vite，Backend NestJS，DB PostgreSQL，Deploy Docker Compose + Nginx'
+            )) as string;
+            archSummary = archSummary.trim() || undefined;
+          }
+        }
+      } else if (!options.yes && fromPrd && !fromArch && !archSummary) {
+        const archSourceMode = await cliUX.askSelect(
+          '检测到你正在基于 PRD 初始化，请补充技术架构输入',
+          [
+            { value: 'doc', label: '导入现有技术架构文档', hint: '推荐，约束最稳定' },
+            { value: 'summary', label: '直接填写技术架构摘要', hint: '适合先给出技术方向和边界' },
+            { value: 'skip', label: '稍后补充', hint: '本次只导入 PRD' }
+          ]
+        ) as string;
+
+        if (archSourceMode === 'doc') {
+          fromArch = (await cliUX.askText(
+            '请输入技术架构文档路径',
+            './docs/tech-stack.md'
+          )) as string;
+          fromArch = fromArch.trim() || undefined;
+        } else if (archSourceMode === 'summary') {
+          archSummary = (await cliUX.askText(
+            '请输入技术架构摘要',
+            '例如: Frontend Vue 3 + Vite，Backend NestJS，DB PostgreSQL，Deploy Docker Compose + Nginx'
+          )) as string;
+          archSummary = archSummary.trim() || undefined;
+        }
+      }
+
       // 3. 生成配置文件
       const configPath = path.resolve(process.cwd(), 'aictx.json');
       const ignorePath = path.resolve(process.cwd(), '.aiignore');
@@ -89,6 +159,12 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
         repository: repoUrl,
         ides: ides.length > 0 ? ides : defaultIdes,
         tags: ["backend", "frontend", "common", projectName],
+        bootstrap: {
+          mode: fromPrd || fromArch || archSummary ? 'from-docs' : 'blank',
+          prdPath: fromPrd,
+          architecturePath: fromArch,
+          hasArchitectureSummary: Boolean(archSummary && archSummary.trim().length > 0)
+        },
         overrides: {}
       };
 
@@ -143,10 +219,17 @@ _运行 \`aictx index\` 自动生成路由表_
         }
       }
 
+      const bootstrapArtifacts = await scaffoldBootstrapArtifacts({
+        cwd: process.cwd(),
+        projectName,
+        fromPrd,
+        fromArch,
+        archSummary
+      });
+
       // Copy built-in Trae skills if Trae is selected
       if (ides.includes('trae')) {
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
         // __dirname is usually 'dist' (when bundled) or 'src/commands' (in dev).
         const isDist = __dirname.endsWith('dist');
         const templatesDir = path.resolve(__dirname, isDist ? 'templates/.trae/skills' : '../templates/.trae/skills');
@@ -168,31 +251,16 @@ _运行 \`aictx index\` 自动生成路由表_
       console.log(`📝 配置文件已生成: ${pc.cyan('aictx.json')}`);
       console.log(`🛡️ 忽略文件已生成: ${pc.cyan('.aiignore')}`);
       console.log(`🗂️ 路由表模板已生成: ${pc.cyan('aictx-docs/**/00-Index.md')}\n`);
+      if (bootstrapArtifacts.importedArtifacts.length > 0 || bootstrapArtifacts.generatedArtifacts.length > 0) {
+        console.log(`📥 已导入/生成启动文档: ${pc.cyan((bootstrapArtifacts.importedArtifacts.length + bootstrapArtifacts.generatedArtifacts.length).toString())} 份`);
+      }
       console.log('======================================================================\n');
       
       // 自动执行 aictx sync
       try {
-        const { execa } = await import('execa');
-        await execa('npx', ['aictx', 'sync'], { 
-          cwd: process.cwd(),
-          stdio: 'inherit'
-        });
+        await runCurrentAictxCommand(['sync'], process.cwd());
       } catch (e) {
-        try {
-          const __filename = fileURLToPath(import.meta.url);
-          const __dirname = path.dirname(__filename);
-          const isDist = __dirname.endsWith('dist');
-          const cliPath = isDist ? path.resolve(__dirname, 'aictx.js') : path.resolve(__dirname, '../bin/aictx.ts');
-          
-          const { execa } = await import('execa');
-          // In dev mode (src/commands), we should technically use ts-node or similar, but this fallback is usually hit in dist mode
-          await execa('node', [cliPath, 'sync'], {
-            cwd: process.cwd(),
-            stdio: 'inherit'
-          });
-        } catch (e2) {
-          console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e2 as Error).message}`));
-        }
+        console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e as Error).message}`));
       }
       
       cliUX.outro('Stop fighting the AI. Start engineering its context.');

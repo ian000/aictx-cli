@@ -85,7 +85,19 @@ Run in your project root:
 ```bash
 aictx init
 ```
-*This will generate an `.aictx` configuration file and guide you through basic RAG mount point settings.*
+This will generate `aictx.json`, scaffold `aictx-docs/`, and inject the selected IDE workspace rules.
+
+If you already have a PRD and architecture document, initialize directly from them:
+```bash
+aictx init --from-prd ./docs/prd.md --from-arch ./docs/tech-stack.md
+```
+
+If you only have the PRD but already know the target stack, provide an architecture summary inline:
+```bash
+aictx init --from-prd ./docs/prd.md --arch "Frontend Vue 3 + Vite, Backend NestJS, DB PostgreSQL, Deploy Docker Compose + Nginx"
+```
+
+This will import the source docs into `aictx-docs/product` and `aictx-docs/architecture`, then generate a bootstrap TODO under `aictx-docs/project`.
 
 ### 3. Sync Team Rules
 

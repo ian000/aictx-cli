@@ -8,6 +8,12 @@ export interface AictxConfig {
   repository?: string;
   ides: string[];
   tags: string[];
+  bootstrap?: {
+    mode: 'blank' | 'from-docs';
+    prdPath?: string;
+    architecturePath?: string;
+    hasArchitectureSummary?: boolean;
+  };
   overrides?: Record<string, any>;
 }
 
