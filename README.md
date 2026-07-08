@@ -149,6 +149,8 @@ We welcome contributions from the community! Whether it's submitting Issues, cre
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+Release process and policy: [RELEASING.md](./RELEASING.md)
+
 ## 📄 License
 
 This project is open-sourced under the [MIT License](LICENSE).

@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: aictx-cli-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -34,6 +38,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify npm package can be packed
+        run: npm pack --dry-run
+
+  release:
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
   publish:
     needs: build-and-test
     if: startsWith(github.ref, 'refs/tags/v')
@@ -52,6 +73,12 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
+
+      - name: Verify tag matches package version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          test "$TAG_VERSION" = "$PACKAGE_VERSION"
+
       - name: Publish to npm
         run: npm publish --access public --provenance
