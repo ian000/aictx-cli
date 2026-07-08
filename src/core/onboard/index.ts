@@ -10,6 +10,7 @@ import { fetchRules } from '../fetcher/index.js';
 import { assembleRules } from '../assembler/index.js';
 import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../injector/index.js';
 import { analyzeWithGraphify } from '../../utils/graphify.js';
+import { ensureCodexWorkspace } from '../codex/index.js';
 
 export interface OnboardOptions {
   cwd: string;
@@ -144,8 +145,10 @@ ${rawReport}
     await fs.ensureDir(path.resolve(this.options.cwd, 'aictx-docs/architecture'));
     await fs.writeFile(path.resolve(this.options.cwd, 'aictx-docs/architecture/system-graph.md'), aictxMarkdown);
     
-    // 4. 生成 Trae Skill 供 IDE 丝滑调用 Graphify
-    sTrans.message('正在为 Trae IDE 安装内置技能 (Skills)...');
+    const onboardIdes = this.getDefaultIdes();
+
+    // 4. 生成 IDE Skills 供助手丝滑调用 Graphify
+    sTrans.message(`正在为 ${onboardIdes.join(', ')} 安装内置技能 (Skills)...`);
     
     // Copy built-in templates first
     const __filenamePath = fileURLToPath(import.meta.url);
@@ -159,10 +162,16 @@ ${rawReport}
     const templatesDir = path.resolve(__dirnamePath, isDist ? 'templates/.trae/skills' : '../../templates/.trae/skills');
     const targetTraeDir = path.resolve(this.options.cwd, '.trae/skills');
     
-    if (fs.existsSync(templatesDir)) {
+    if (fs.existsSync(templatesDir) && onboardIdes.includes('trae')) {
       await fs.copy(templatesDir, targetTraeDir, { overwrite: false });
     } else {
-      consola.warn(`未找到模板目录: ${templatesDir} (__dirnamePath: ${__dirnamePath})`);
+      if (!fs.existsSync(templatesDir)) {
+        consola.warn(`未找到模板目录: ${templatesDir} (__dirnamePath: ${__dirnamePath})`);
+      }
+    }
+
+    if (onboardIdes.includes('codex')) {
+      await ensureCodexWorkspace(this.options.cwd);
     }
 
     const skillDir = path.resolve(this.options.cwd, '.trae/skills/aictx-graphify');
@@ -205,7 +214,14 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
 5. **Inspect Specific Symbols:**
    Search for symbol names inside \`aictx-docs/architecture/graphify-out/graph.json\` before broad raw-file search.
 `;
-    await fs.writeFile(path.resolve(skillDir, 'SKILL.md'), skillContent);
+    if (onboardIdes.includes('trae')) {
+      await fs.writeFile(path.resolve(skillDir, 'SKILL.md'), skillContent);
+    }
+    if (onboardIdes.includes('codex')) {
+      const codexSkillDir = path.resolve(this.options.cwd, '.agents/skills/aictx-graphify');
+      await fs.ensureDir(codexSkillDir);
+      await fs.writeFile(path.resolve(codexSkillDir, 'SKILL.md'), skillContent);
+    }
 
     sTrans.stop('知识库与 IDE Skill 转换生成完毕！');
 
@@ -217,7 +233,7 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
         $schema: "https://unpkg.com/aictx/schema.json",
         version: "1.0",
         repository: "",
-        ides: ["trae"],
+        ides: onboardIdes,
         tags: ["backend", "frontend", "common", projectName],
         overrides: {}
       };
@@ -250,7 +266,13 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     console.log('\n======================================================================');
     console.log(`🎉 基于纯本地 AST 图谱的逆向工程 (Onboarding) 成功完成！`);
     console.log(`✅ ${pc.cyan('aictx-docs/architecture/system-graph.md')}`);
-    console.log(`✅ ${pc.cyan('.trae/skills/aictx-graphify/SKILL.md')} (已为 IDE 自动挂载 Graphify 技能)`);
+    if (onboardIdes.includes('trae')) {
+      console.log(`✅ ${pc.cyan('.trae/skills/aictx-graphify/SKILL.md')} (已为 IDE 自动挂载 Graphify 技能)`);
+    }
+    if (onboardIdes.includes('codex')) {
+      console.log(`✅ ${pc.cyan('.agents/skills/aictx-graphify/SKILL.md')} (已为 Codex 自动挂载 Graphify 技能)`);
+      console.log(`✅ ${pc.cyan('AGENTS.md')} (已为 Codex 自动生成项目入口指令)`);
+    }
     console.log(`全程零 Token 消耗、零云端 API 调用、绝对保护代码隐私！`);
     
     // 增加省 Token 科普与神级提示词
@@ -273,7 +295,7 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     }
 
     console.log('\n======================================================================');
-    console.log(`🚀 【下一步行动】请复制以下提示词，交给你的 AI 助手 (如 Trae/Cursor)：`);
+    console.log(`🚀 【下一步行动】请复制以下提示词，交给你的 AI 助手 (如 Trae/Cursor/Codex)：`);
     console.log('======================================================================\n');
     
     let finalPrompt = '';
@@ -338,6 +360,10 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     } catch {
       return '';
     }
+  }
+
+  private getDefaultIdes(): string[] {
+    return process.env.CODEX_HOME ? ['codex'] : ['trae'];
   }
 
   private async sniffStaticInfo(): Promise<StaticInfo> {

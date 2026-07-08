@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import type { AssembleResult } from '../assembler/index.js';
+import { ensureCodexWorkspace } from '../codex/index.js';
 
 export abstract class IdeAdapter {
   abstract inject(cwd: string, result: AssembleResult): Promise<void>;
@@ -62,3 +63,14 @@ export class WindsurfAdapter extends IdeAdapter {
   }
 }
 
+export class CodexAdapter extends IdeAdapter {
+  async inject(cwd: string, result: AssembleResult): Promise<void> {
+    await ensureCodexWorkspace(cwd);
+    const workflowsDir = path.join(cwd, '.agents', 'workflows');
+
+    for (const rule of result.rules) {
+      const targetPath = path.join(workflowsDir, `aictx-${rule.filename}`);
+      await this.writeRule(targetPath, rule.content);
+    }
+  }
+}

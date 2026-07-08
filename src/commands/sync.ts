@@ -1,7 +1,7 @@
 import { ConfigParser } from '../config/index.js';
 import { fetchRules } from '../core/fetcher/index.js';
 import { assembleRules } from '../core/assembler/index.js';
-import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../core/injector/index.js';
+import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter, CodexAdapter } from '../core/injector/index.js';
 import { consola } from 'consola';
 import pc from 'picocolors';
 import path from 'path';
@@ -11,7 +11,8 @@ const adapters: Record<string, any> = {
   trae: new TraeAdapter(),
   cursor: new CursorAdapter(),
   windsurf: new WindsurfAdapter(),
-  claude: new ClaudeAdapter()
+  claude: new ClaudeAdapter(),
+  codex: new CodexAdapter()
 };
 
 export const syncCommand = (cli: any) => {

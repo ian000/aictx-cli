@@ -5,13 +5,14 @@ import path from 'path';
 import pc from 'picocolors';
 import { cliUX } from '../utils/cli-ux.js';
 import { fileURLToPath } from 'url';
+import { ensureCodexWorkspace } from '../core/codex/index.js';
 
 export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
   cli.command('init', '初始化 aictx 配置')
     .option('--onboard', '直接进入存量项目逆向接管流程')
     .option('-y, --yes', '跳过所有确认提示')
     .option('--repo <url>', '指定 Meta-Repo 地址 (跳过交互)')
-    .option('--ide <ide>', '指定 IDE (如 trae, 跳过交互)')
+    .option('--ide <ide>', '指定 IDE (如 trae/codex, 跳过交互)')
     .action(async (options) => {
       cliUX.intro('初始化 Context as Code 基础设施');
 
@@ -52,6 +53,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
             { value: 'cursor', label: 'Cursor', hint: 'Cursor (.cursor/rules/)' },
             { value: 'windsurf', label: 'Windsurf', hint: 'Codeium Windsurf' },
             { value: 'claude', label: 'Claude Code', hint: 'Anthropic CLI (.clauderc)' },
+            { value: 'codex', label: 'Codex', hint: 'OpenAI Codex (AGENTS.md + .agents/*)' },
           ],
           true
         ) as string[];
@@ -149,6 +151,10 @@ _运行 \`aictx index\` 自动生成路由表_
         if (fs.existsSync(templatesDir)) {
           await fs.copy(templatesDir, targetSkillsDir, { overwrite: false });
         }
+      }
+
+      if (ides.includes('codex')) {
+        await ensureCodexWorkspace(process.cwd());
       }
 
       s.stop('配置生成成功！');

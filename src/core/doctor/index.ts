@@ -43,6 +43,10 @@ export async function diagnoseDrift(cwd: string, cacheDir: string, ides: string[
       };
     }
     if (ide === 'claude') targetDir = path.join(cwd, '.claude', 'rules');
+    if (ide === 'codex') {
+      targetDir = path.join(cwd, '.agents', 'workflows');
+      extMap = (name: string) => `aictx-${name}`;
+    }
     // Windsurf 是单文件，暂时跳过复杂的文件级 hash 比对
     if (ide === 'windsurf') continue;
 
