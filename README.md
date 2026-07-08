@@ -19,10 +19,10 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure built for the AI-Assisted Programming era (Trae, Cursor, Windsurf, Codex, OpenCode, Claude Code, etc.). It represents a unique implementation of the emerging **"Harness Engineering"** philosophy. Think of it as a high-precision "external brain navigator" for Large Language Models (LLMs).
+**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure built for the AI-Assisted Programming era (Codex, Trae, Cursor, Windsurf, OpenCode, Claude Code, etc.). It represents a unique implementation of the emerging **"Harness Engineering"** philosophy. Think of it as a high-precision "external brain navigator" for Large Language Models (LLMs).
 
 We are dedicated to providing three core infrastructure capabilities for the AI-Assisted Programming era:
-1. **🌍 Cross-Device & Cross-IDE Sync**: Whether you use Trae, Cursor, Windsurf, Codex, OpenCode, or Claude Code, a single set of architecture Rules and local Skills can be compiled and dynamically injected into all your terminals with one click, completely ending the disaster of "different AIs writing in different styles."
+1. **🌍 Cross-Device & Cross-IDE Sync**: Whether you use Codex, Trae, Cursor, Windsurf, OpenCode, or Claude Code, a single set of architecture Rules and local Skills can be compiled and dynamically injected into all your terminals with one click, completely ending the disaster of "different AIs writing in different styles."
 2. **💰 Extreme Cost Reduction & Anti-Hallucination**: Stop making AI blindly read hundreds of thousands of lines of legacy code. The pure local AST engine extracts highly concentrated physical topology summaries. Combined with the MOC (Map of Content) bi-directional routing, Token consumption drops by 90%, eliminating AI hallucinations at the source.
 3. **🛡️ Architecture Anti-Corruption & Red-Line Blocking**: Codify your business boundaries and core logic. When the new prompt received by the IDE conflicts with the existing system architecture, it automatically triggers a "business red line" soft interception or hard block, forcing the AI to correct the plan or synchronously update the documentation, ensuring the project evolution does not corrupt.
 

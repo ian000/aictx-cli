@@ -38,11 +38,17 @@ export const cliUX = {
     return this.checkCancel(result);
   },
 
-  async askMultiSelect<T>(message: string, options: { value: T; label: string; hint?: string }[], required: boolean = true) {
+  async askMultiSelect<T>(
+    message: string,
+    options: { value: T; label: string; hint?: string }[],
+    required: boolean = true,
+    initialValues?: T[]
+  ) {
     const result = await multiselect({
       message,
       options,
       required,
+      initialValues,
     });
     return this.checkCancel(result);
   },

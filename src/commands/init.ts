@@ -12,9 +12,10 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
     .option('--onboard', '直接进入存量项目逆向接管流程')
     .option('-y, --yes', '跳过所有确认提示')
     .option('--repo <url>', '指定 Meta-Repo 地址 (跳过交互)')
-    .option('--ide <ide>', '指定 IDE (如 trae/codex, 跳过交互)')
+    .option('--ide <ide>', '指定 IDE (如 codex/trae, 跳过交互)')
     .action(async (options) => {
       cliUX.intro('初始化 Context as Code 基础设施');
+      const defaultIdes = ['codex'];
 
       let projectType = 'greenfield';
       
@@ -45,17 +46,20 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       let ides: string[] = [];
       if (options.ide) {
         ides = [options.ide];
+      } else if (options.yes) {
+        ides = defaultIdes;
       } else {
         ides = await cliUX.askMultiSelect(
           '请选择当前团队使用的 AI IDE 或编程助手 (多选)',
           [
+            { value: 'codex', label: 'Codex', hint: 'OpenAI Codex (AGENTS.md + .agents/*) [默认]' },
             { value: 'trae', label: 'Trae', hint: '字节跳动 AI IDE (.trae/rules/)' },
             { value: 'cursor', label: 'Cursor', hint: 'Cursor (.cursor/rules/)' },
             { value: 'windsurf', label: 'Windsurf', hint: 'Codeium Windsurf' },
             { value: 'claude', label: 'Claude Code', hint: 'Anthropic CLI (.clauderc)' },
-            { value: 'codex', label: 'Codex', hint: 'OpenAI Codex (AGENTS.md + .agents/*)' },
           ],
-          true
+          true,
+          defaultIdes
         ) as string[];
       }
 
@@ -83,7 +87,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
         $schema: "https://unpkg.com/aictx/schema.json",
         version: "1.0",
         repository: repoUrl,
-        ides: ides,
+        ides: ides.length > 0 ? ides : defaultIdes,
         tags: ["backend", "frontend", "common", projectName],
         overrides: {}
       };

@@ -19,10 +19,10 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) 是一款专为 AI 辅助编程（Trae, Cursor, Windsurf, Codex, OpenCode, Claude Code 等）打造的 **Context as Code (CaC)** 基础设施，更是当下火热的 **“Harness Engineering (AI 驾驭工程)”** 理念的独特实现。它就像是给你的 AI 助手外接了一个永久记忆与防腐装甲。
+**aictx-cli** (AI Context CLI) 是一款专为 AI 辅助编程（Codex, Trae, Cursor, Windsurf, OpenCode, Claude Code 等）打造的 **Context as Code (CaC)** 基础设施，更是当下火热的 **“Harness Engineering (AI 驾驭工程)”** 理念的独特实现。它就像是给你的 AI 助手外接了一个永久记忆与防腐装甲。
 
 我们致力于为 AI 编程时代提供三大核心基础设施能力：
-1. **🌍 跨设备与跨 IDE 同步**：无论是 Trae、Cursor、Windsurf、Codex 还是 OpenCode、Claude Code，一份架构规则 (Rules) 与本地技能 (Skills)，一键编译并动态注入所有终端，彻底终结“不同 AI 写出不同风格”的灾难。
+1. **🌍 跨设备与跨 IDE 同步**：无论是 Codex、Trae、Cursor、Windsurf 还是 OpenCode、Claude Code，一份架构规则 (Rules) 与本地技能 (Skills)，一键编译并动态注入所有终端，彻底终结“不同 AI 写出不同风格”的灾难。
 2. **💰 极致降本与抗幻觉**：不再让 AI 盲读十几万行旧代码。纯本地 AST 引擎提取高浓度物理拓扑摘要，结合 MOC (Map of Content) 双链路由，Token 消耗直降 90%，从根源上消除 AI 胡编乱造。
 3. **🛡️ 架构防腐与红线拦截**：将业务边界与核心逻辑代码化。当 IDE 接收到的新提示词与既有系统架构发生冲突时，自动触发“业务红线”软拦截或硬阻断，强制 AI 修正方案或同步更新文档，确保项目演进不腐化。
 

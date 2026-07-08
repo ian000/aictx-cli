@@ -363,7 +363,7 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
   }
 
   private getDefaultIdes(): string[] {
-    return process.env.CODEX_HOME ? ['codex'] : ['trae'];
+    return ['codex'];
   }
 
   private async sniffStaticInfo(): Promise<StaticInfo> {
