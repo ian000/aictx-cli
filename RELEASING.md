@@ -20,16 +20,24 @@ This repository publishes to npm with npm Trusted Publisher and GitHub Actions O
 
 1. Make sure `package.json` version is correct.
 2. Run `npm run release:check`.
-3. Merge to `main`.
-4. Create and push the tag:
+3. Generate the local draft:
 
 ```bash
-git tag -a v1.5.1 -m "Release v1.5.1"
+npm run release:plan
+```
+
+This writes `.release-notes/vX.Y.Z.md` and shows whether the version tag already exists.
+
+4. Merge to `main`.
+5. Create and push the tag:
+
+```bash
+npm run release:tag
 git push origin v1.5.1
 ```
 
-5. Watch `.github/workflows/ci.yml`.
-6. Confirm the GitHub Release and npm version were both created.
+6. Watch `.github/workflows/ci.yml`.
+7. Confirm the GitHub Release and npm version were both created.
 
 ## Changelog Convention
 
