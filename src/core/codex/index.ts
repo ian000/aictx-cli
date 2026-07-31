@@ -34,7 +34,9 @@ If the requested skill exists in both \`.agents/skills\` and another IDE-specifi
 
 ## Documents
 
-When you create or update project, product, or architecture documents, rebuild the routing table with:
+- Before reading project, product, or architecture documents for a user request, run \`aictx route "<question>"\` and read the returned documents in order.
+- If no route matches, read the relevant \`aictx-docs/**/00-Index.md\` first, then broaden search only when the index is insufficient.
+- When you create or update project, product, or architecture documents, rebuild the routing table with:
 
 - \`aictx index\`
 ${AGENTS_END}`;

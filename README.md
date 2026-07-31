@@ -160,6 +160,22 @@ Generated targets:
 
 `aictx sync` only manages files with the `aictx-` prefix in those rule directories. User-owned custom rules without that prefix are preserved.
 
+### 4. Route Before Reading Docs
+
+Compile MOC tables after creating or changing project documents:
+```bash
+aictx index
+```
+
+`aictx index` updates every `00-Index.md` containing `<!-- aictx-index-start -->` with a route table that includes the document path, tags, entities, aliases, last updated date, and description.
+
+Before asking an AI assistant to inspect product, architecture, or project docs, route the question first:
+```bash
+aictx route "How does checkout payment work?"
+```
+
+The command ranks atomic documents from `aictx-docs/**/00-Index.md` metadata so the assistant can read the top matches before falling back to global search.
+
 ## 🛠️ CLI Commands
 
 > **Design Philosophy: Invisible CLI**
@@ -173,6 +189,7 @@ Generated targets:
 | `aictx plan` | Generate architecture change intent & task list | **🤖 AI Auto** (Before writing code for new requirements) |
 | `aictx apply` | Execute code changes & solidify knowledge base | **🤖 AI Auto** (After human reviews the plan) |
 | `aictx index`| Compile MOC bi-link routing table | **🤖 AI Auto** (Rebuild AI index after docs are modified) |
+| `aictx route "<question>"` | Rank atomic docs from the MOC route table | **🤖 AI Auto** (Before reading docs or doing broad search) |
 | `aictx sync` | Sync, assemble, and inject AI context rules | **🪝 Hook Silent** (Recommended to bind to `postinstall`) |
 | `aictx doctor` | Diagnose local rules drift & token health | **🪝 Hook Silent** (Recommended to bind to Git `pre-commit`) |
 
@@ -185,6 +202,11 @@ Every package release should update this section before publishing to npm.
 ### Unreleased
 
 No changes yet.
+
+### v1.6.3 - 2026-08-01
+
+- Added a built-in common graph freshness rule: when graph data is stale, agents must regenerate the project graph before making architecture or codebase-relationship judgments.
+- Made MOC routing actionable with richer `aictx index` tables and a new `aictx route "<question>"` command for selecting atomic docs before global search.
 
 ### v1.6.2 - 2026-08-01
 

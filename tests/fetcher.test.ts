@@ -36,4 +36,24 @@ describe('rule fetcher', () => {
     expect(await fs.pathExists(path.join(cacheDir, 'new.md'))).toBe(true);
     expect(await fs.pathExists(path.join(cacheDir, 'old.md'))).toBe(false);
   });
+
+  it('ships the graph freshness rule in builtin rules', async () => {
+    await fetchRules('builtin', cacheDir);
+
+    const rulePath = path.join(cacheDir, 'common-graph-freshness.md');
+    const content = await fs.readFile(rulePath, 'utf-8');
+
+    expect(content).toContain('图谱滞后必须先重建');
+    expect(content).toContain('aictx graph analyze --dir . --out ./graphify-out');
+  });
+
+  it('ships the MOC routing rule in builtin rules', async () => {
+    await fetchRules('builtin', cacheDir);
+
+    const rulePath = path.join(cacheDir, 'common-moc-routing.md');
+    const content = await fs.readFile(rulePath, 'utf-8');
+
+    expect(content).toContain('aictx route "<用户问题>"');
+    expect(content).toContain('aictx index');
+  });
 });

@@ -93,6 +93,8 @@ This repository uses aictx rules as its shared source of truth.
 
 - Read relevant \`.claude/rules/aictx-*.md\` files before business-sensitive changes.
 - Project skills are available under \`.claude/skills\`.
+- Before reading product, architecture, or project docs for a request, run \`aictx route "<question>"\` and read the returned documents in order.
+- If routing has no match, read the relevant \`aictx-docs/**/00-Index.md\` before broad search.
 - Run \`aictx index\` after changing product or architecture documents.`
   );
 }

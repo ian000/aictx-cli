@@ -8,6 +8,7 @@ import { resolveCommand } from '../commands/resolve.js';
 import { doctorCommand } from '../commands/doctor.js';
 import { infoCommand } from '../commands/info.js';
 import { indexCommand } from '../commands/index.js';
+import { routeCommand } from '../commands/route.js';
 import { graphCommand } from '../commands/graph.js';
 import { initI18n } from '../locales/index.js';
 import pkg from '../../package.json';
@@ -38,6 +39,7 @@ resolveCommand(cli as any);
 doctorCommand(cli as any);
 infoCommand(cli as any);
 indexCommand(cli as any);
+routeCommand(cli as any);
 graphCommand(cli as any);
 
 cli.help();

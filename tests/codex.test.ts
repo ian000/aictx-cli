@@ -42,7 +42,9 @@ describe('Codex integration', () => {
 
     expect(await fs.pathExists(workflowPath)).toBe(true);
     expect(await fs.readFile(workflowPath, 'utf-8')).toContain('请全程与用中文沟通');
-    expect(await fs.readFile(agentsPath, 'utf-8')).toContain('.agents/workflows');
+    const agentsContent = await fs.readFile(agentsPath, 'utf-8');
+    expect(agentsContent).toContain('.agents/workflows');
+    expect(agentsContent).toContain('aictx route "<question>"');
     expect(await fs.pathExists(skillPath)).toBe(true);
   });
 
