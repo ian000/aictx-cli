@@ -46,4 +46,16 @@ describe('aictx config parser', () => {
 
     await expect(new ConfigParser(testDir).read()).rejects.toThrow('不支持的 AI 工具: vscode');
   });
+
+  it('validates context and runtime settings before commands use them', async () => {
+    await fs.writeJson(configPath, {
+      version: '1.0.0',
+      ides: ['codex'],
+      tags: [],
+      context: { bundlePath: 42 },
+      runtime: { defaultBudget: -1 }
+    });
+
+    await expect(new ConfigParser(testDir).read()).rejects.toThrow('context.bundlePath 必须是字符串');
+  });
 });

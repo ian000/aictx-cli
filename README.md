@@ -1,12 +1,12 @@
 <div align="center">
   <h1>aictx-cli 🧠</h1>
-  <p><b>Context as Code (CaC) CLI for AI-Assisted Engineering</b></p>
+  <p><b>Context as Code infrastructure for AI-Assisted Engineering and Agent Runtime</b></p>
   <p><i>Stop fighting the AI. Start engineering its context.</i></p>
 </div>
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-orange.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/aictx-cli.svg)](https://www.npmjs.com/package/aictx-cli)
 [![Build Status](https://github.com/ian000/aictx-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ian000/aictx-cli/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
@@ -19,7 +19,7 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) is the **Context as Code (CaC)** infrastructure built for the AI-Assisted Programming era (Codex, Trae, Cursor, Windsurf, OpenCode, Claude Code, etc.). It represents a unique implementation of the emerging **"Harness Engineering"** philosophy. Think of it as a high-precision "external brain navigator" for Large Language Models (LLMs).
+**aictx-cli** (AI Context CLI) is **Context as Code (CaC)** infrastructure for AI-assisted development and internal Agent runtimes. Development commands maintain rules, documents, indexes, graphs, and IDE configuration. Runtime commands consume a versioned context snapshot for one Agent task without changing those sources.
 
 We are dedicated to providing three core infrastructure capabilities for the AI-Assisted Programming era:
 1. **🌍 Cross-Device & Cross-IDE Sync**: Whether you use Codex, Trae, Cursor, Windsurf, OpenCode, or Claude Code, a single set of architecture Rules and local Skills can be compiled and dynamically injected into all your terminals with one click, completely ending the disaster of "different AIs writing in different styles."
@@ -176,6 +176,140 @@ aictx route "How does checkout payment work?"
 
 The command ranks atomic documents from `aictx-docs/**/00-Index.md` metadata so the assistant can read the top matches before falling back to global search.
 
+### 5. Prepare Context for an Agent Run
+
+The current Runtime is an **Agent context preparation and audit layer**, not a complete Agent executor. It selects rules and documents, checks freshness, enforces the Token budget, and records each preparation. It does not currently invoke models, execute tools, schedule tasks, or retry failures; Codex or your own Agent Host remains responsible for execution.
+
+```text
+Rules + MOC documents + graph
+          |
+          | aictx sync / context build
+          v
+Context Bundle -- context prepare "<task>" --> Context Packet --> Agent Host
+                                               +--> Run Manifest
+```
+
+#### First-Time Setup
+
+```bash
+# 1. Initialize the project; Codex is selected by default
+aictx init
+
+# 2. Sync rules, inject the IDE, and build the Context Bundle
+aictx sync
+
+# 3. Confirm that the Bundle still matches its sources
+aictx context verify
+```
+
+`aictx sync` performs rule synchronization, IDE injection, and Bundle construction together. To refetch the repository configured in `aictx.json` and refresh only the Runtime snapshot without reinjecting the IDE, run `aictx context build`.
+
+#### Preparing Each Agent Task
+
+```bash
+# Human-readable summary; also writes a Run Manifest
+aictx context prepare "Fix checkout payment"
+
+# Markdown containing the complete selected rules and documents
+aictx context prepare "Fix checkout payment" --codex
+
+# Machine-readable output for an Agent Host
+aictx context prepare "Fix checkout payment" --json
+```
+
+`context prepare` performs its own freshness check, so a separate `context verify` is not required before every task. `--codex` only renders context suitable for Codex; it **does not start Codex automatically**.
+
+Example default output:
+
+```text
+Context Packet: a465db4045ad932d8316642d
+status: ready
+budget: 4611/8000
+rules: 5, documents: 0
+manifest: .aictx/runs/55daeca9-7743-44fb-92ef-fba783e4f36d.json
+```
+
+If mandatory `alwaysApply` rules already exceed the budget, the Packet sets `budgetExceeded: true` and does not add optional rules or documents. Increase `--budget` or reduce mandatory rules before relying on that Packet.
+
+The Runtime uses three records:
+
+- **Context Bundle**: `.aictx/context-bundle.json`, containing rules, MOC documents, graph metadata, and source fingerprints.
+- **Context Packet**: output of `context prepare`, containing mandatory `alwaysApply` rules and task-relevant optional rules and documents selected within the Token budget.
+- **Run Manifest**: `.aictx/runs/<run-id>.json`, recording the task, Bundle version, selected content, and freshness result. It means context was prepared; it does not mean the Agent task ran or succeeded.
+
+#### Common Options
+
+| Option | Purpose | Default |
+|---|---|---|
+| `--budget <tokens>` | Token budget for this Context Packet | `8000` |
+| `--limit <count>` | Maximum number of selected MOC documents | `3` |
+| `--json` | Emit complete JSON for an Agent Host | off |
+| `--codex` | Emit Markdown containing the complete selected content | off |
+| `--no-manifest` | Build the Packet without saving a run record | off |
+| `--allow-stale` | Return a stale Packet while keeping `packet.status` as `context_stale` | off |
+| `--bundle <path>` | Override the Bundle path | `.aictx/context-bundle.json` |
+| `--runs-dir <dir>` | Override the Run Manifest directory | `.aictx/runs` |
+
+#### Default Configuration
+
+`aictx init` writes these settings to `aictx.json`:
+
+```json
+{
+  "context": {
+    "cacheDir": ".aictx-cache",
+    "docsDir": "aictx-docs",
+    "graphPath": "graphify-out/graph.json",
+    "bundlePath": ".aictx/context-bundle.json"
+  },
+  "runtime": {
+    "runsDir": ".aictx/runs",
+    "defaultBudget": 8000,
+    "documentLimit": 3
+  }
+}
+```
+
+#### Agent Host Integration
+
+An Agent Host should run `context prepare --json`, validate `packet.status`, and then pass the packet to its model or Agent. Pseudocode:
+
+```ts
+const prepared = JSON.parse(
+  await run("aictx", ["context", "prepare", task, "--json"])
+);
+
+if (prepared.packet.status !== "ready") {
+  throw new Error("Context is stale; rebuild the Bundle");
+}
+
+await agent.run({ task, context: prepared.packet });
+```
+
+#### Handling Stale Context
+
+`context verify` and `context prepare` check the rules, MOC documents, graph, and `aictx.json` recorded by the Bundle. Modifying or removing a recorded file, or adding Markdown under a watched rule or document directory, produces `context_stale`.
+
+| Change | Correct action |
+|---|---|
+| Rule repository or tags changed | `aictx sync` |
+| Document added, moved, or its Frontmatter changed | Run `aictx index`, then `aictx context build` |
+| Code structure changed and the graph is stale | Run `aictx graph analyze --dir . --out ./graphify-out`, then `aictx context build` |
+| Existing bundled document content changed | `aictx context build` |
+
+Exit codes are `0` for success, `2` for stale context, and `1` for command or configuration errors. `--allow-stale` lets `context prepare` exit with `0`, but the returned `packet.status` remains `context_stale`.
+
+#### Inspecting a Run Record
+
+JSON output exposes the Run ID as `manifest.runId`. Default and `--codex` output show `.aictx/runs/<run-id>.json`; the filename without `.json` is the Run ID:
+
+```bash
+aictx run inspect "<run-id>"
+aictx run inspect "<run-id>" --json
+```
+
+Runtime only reads context sources. Other than writing records under `.aictx/runs/`, it never modifies rules, documents, or graphs automatically.
+
 ## 🛠️ CLI Commands
 
 > **Design Philosophy: Invisible CLI**
@@ -186,11 +320,13 @@ The command ranks atomic documents from `aictx-docs/**/00-Index.md` metadata so 
 | `aictx init` | Smart Wizard (Supports Greenfield & Brownfield reverse eng.) | **👤 Manual** (Only once when adopting aictx framework) |
 | `aictx info` | Display anti-corruption & token savings dashboard | **👤 Manual** (On-demand insights into team convention adoption) |
 | `aictx resolve`| Interactively resolve context conflicts | **👤 Manual** (Intervene when multiple rules describe the same boundary) |
-| `aictx plan` | Generate architecture change intent & task list | **🤖 AI Auto** (Before writing code for new requirements) |
-| `aictx apply` | Execute code changes & solidify knowledge base | **🤖 AI Auto** (After human reviews the plan) |
 | `aictx index`| Compile MOC bi-link routing table | **🤖 AI Auto** (Rebuild AI index after docs are modified) |
 | `aictx route "<question>"` | Rank atomic docs from the MOC route table | **🤖 AI Auto** (Before reading docs or doing broad search) |
-| `aictx sync` | Sync, assemble, and inject AI context rules | **🪝 Hook Silent** (Recommended to bind to `postinstall`) |
+| `aictx sync` | Sync and inject rules, then emit a Context Bundle | **🪝 Hook Silent** (After context sources change) |
+| `aictx context build` | Rebuild the versioned Context Bundle | **🤖 AI Auto** (Before an Agent run when context changed) |
+| `aictx context verify` | Check whether Bundle sources are still fresh | **🤖 Agent Host** (Before preparing a run) |
+| `aictx context prepare "<task>"` | Select a task-specific Context Packet and write a Run Manifest | **🤖 Agent Host** (At run start) |
+| `aictx run inspect "<run-id>"` | Inspect a prior Run Manifest | **👤 / 🤖** (Audit and diagnosis) |
 | `aictx doctor` | Diagnose local rules drift & token health | **🪝 Hook Silent** (Recommended to bind to Git `pre-commit`) |
 
 > Run `aictx <command> --help` for detailed usage of any command.
@@ -202,6 +338,15 @@ Every package release should update this section before publishing to npm.
 ### Unreleased
 
 No changes yet.
+
+### v2.0.0 - 2026-08-01
+
+- Added three explicit architecture layers: Shared Context Core, Development Plane, and Runtime Plane, with one-way dependency rules.
+- Added versioned Context Bundles, task-specific Context Packets, source freshness checks, and auditable Run Manifests.
+- Added `aictx context build`, `aictx context verify`, `aictx context prepare`, and `aictx run inspect`; `aictx sync` now refreshes the Bundle automatically.
+- Preserved v1 configuration and the existing `sync` workflow; a Bundle build failure no longer invalidates completed IDE rule synchronization.
+- Expanded the Runtime guide with its capability boundary, daily workflow, options, configuration, stale-context recovery, and Agent Host integration.
+- Changed the project license from MIT to PolyForm Noncommercial 1.0.0. Commercial use requires separate written authorization; historical MIT releases keep their original terms.
 
 ### v1.6.4 - 2026-08-01
 
@@ -232,20 +377,23 @@ No changes yet.
 
 aictx is committed to becoming the standard infrastructure for the AI-Assisted Engineering era. Whether helping **solo full-stack developers** build low-token personal knowledge bases or empowering **mid-to-large teams** to achieve architecture consistency, our evolution roadmap includes:
 
-- [x] **Phase 1: CLI Infrastructure Setup** (Current Phase)
+- [x] **Phase 1: Development Infrastructure**
   - Core command scaffold (`init`, `sync`, `index`, `doctor`, `resolve`, `info`)
   - Cross-platform compatible builds
   - Automatic MOC bi-link indexing mechanism
-- [ ] **Phase 2: Rule Parser & Assembler Engine**
-  - Support multi-source rule fetching (Git, Local, HTTP)
-  - AST-level project feature sniffing & dynamic Context injection
-- [ ] **Phase 3: Deep IDE & Workflow Integration**
-  - Seamless Trae / Cursor / Windsurf / Codex / OpenCode / Claude Code plugin mounting
-  - CI/CD pipeline interception and gating
+- [x] **Phase 2: Shared Context Core**
+  - Stable Bundle, Packet, provenance, Token budget, and freshness contracts
+  - MOC routing and graph references shared by development and runtime flows
+- [x] **Phase 3: Internal Agent Runtime Foundation**
+  - Read-only context preparation and Run Manifests
+  - Codex adapter and host-neutral JSON output
+- [ ] **Phase 4: Runtime Hardening**
+  - Policy gates, pluggable host adapters, observability, replay, and evaluation
+  - Split packages only when deployment, ownership, permissions, or release cadence require it
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Whether it's submitting Issues, creating PRs, or sharing your best practices with Context as Code.
+We welcome noncommercial contributions from the community. Contributions are distributed under the project's current license.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -257,4 +405,6 @@ Release process and policy: [RELEASING.md](./RELEASING.md)
 
 ## 📄 License
 
-This project is open-sourced under the [MIT License](LICENSE).
+Current source is available under the [PolyForm Noncommercial License 1.0.0](LICENSE). Noncommercial use, modification, and distribution are allowed under those terms. Commercial use requires separate written authorization; see [Commercial Licensing](COMMERCIAL_LICENSE.md).
+
+This is a Source-Available project, not OSI Open Source. Releases previously published under MIT remain under their original MIT terms.

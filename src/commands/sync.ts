@@ -1,7 +1,14 @@
-import { ConfigParser } from '../config/index.js';
-import { fetchRules } from '../core/fetcher/index.js';
-import { assembleRules } from '../core/assembler/index.js';
-import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter, CodexAdapter } from '../core/injector/index.js';
+import { ConfigParser, type AictxConfig } from '../config/index.js';
+import {
+  assembleRules,
+  buildContextBundle,
+  CodexAdapter,
+  ClaudeAdapter,
+  CursorAdapter,
+  fetchRules,
+  TraeAdapter,
+  WindsurfAdapter
+} from '../development/index.js';
 import { consola } from 'consola';
 import pc from 'picocolors';
 import path from 'path';
@@ -15,6 +22,33 @@ const adapters: Record<string, any> = {
   codex: new CodexAdapter()
 };
 
+export interface SyncBundleRefreshResult {
+  bundlePath: string;
+  version?: string;
+  error?: string;
+}
+
+export async function refreshContextBundleAfterSync(
+  cwd: string,
+  config: AictxConfig,
+  cacheDir: string
+): Promise<SyncBundleRefreshResult> {
+  const bundlePath = path.resolve(cwd, config.context?.bundlePath ?? '.aictx/context-bundle.json');
+  try {
+    const bundle = await buildContextBundle({
+      projectDir: cwd,
+      cacheDir,
+      docsDir: path.resolve(cwd, config.context?.docsDir ?? 'aictx-docs'),
+      graphPath: path.resolve(cwd, config.context?.graphPath ?? 'graphify-out/graph.json'),
+      outputPath: bundlePath,
+      tags: config.tags
+    });
+    return { bundlePath, version: bundle.version };
+  } catch (error: any) {
+    return { bundlePath, error: error.message };
+  }
+}
+
 export const syncCommand = (cli: any) => {
   cli.command('sync', '同步并组装 AI 上下文规则')
     .action(async () => {
@@ -23,11 +57,10 @@ export const syncCommand = (cli: any) => {
         const config = await parser.read();
         
         const cwd = process.cwd();
-        // 确保 cacheDir 存在于项目根目录下
-        const cacheDir = path.join(cwd, '.aictx-cache');
+        const cacheDir = path.resolve(cwd, config.context?.cacheDir ?? '.aictx-cache');
         
         // 1. Fetch
-        if (!config.repository || config.repository.trim() === '') {
+        if (!config.repository || config.repository.trim() === '' || config.repository === 'builtin') {
           consola.start('正在释放 aictx 内置防腐与架构规则 (Builtin Templates)...');
         } else {
           consola.start(`正在从远程 Meta-Repo 同步规则: ${config.repository}`);
@@ -68,6 +101,20 @@ export const syncCommand = (cli: any) => {
           }
         }
 
+        // 4. Emit the versioned contract consumed by Agent Runtime.
+        const bundleRefresh = await refreshContextBundleAfterSync(cwd, config, cacheDir);
+        if (bundleRefresh.error) {
+          consola.warn(
+            `IDE 规则已同步，但 Context Bundle 未更新: ${bundleRefresh.error}。`
+            + ' 修复上下文来源后运行 aictx context build。'
+          );
+        } else {
+          consola.success(
+            `Context Bundle 已更新: ${path.relative(cwd, bundleRefresh.bundlePath)}`
+            + ` (${bundleRefresh.version!.slice(0, 12)})`
+          );
+        }
+
         // 检查是否有专属业务规则
         const projectName = path.basename(cwd);
         const hasDomainRules = result.rules.some((rule) => rule.filename.includes(projectName));
@@ -80,7 +127,7 @@ export const syncCommand = (cli: any) => {
           return;
         }
 
-        // 4. Value Dashboard (Value Perception)
+        // 5. Value Dashboard (Value Perception)
         console.log('\n======================================================================');
         console.log(`${pc.green('✨ 同步与组装完成！')}\n`);
         console.log(`🛡️ 拦截无关规则数: ${pc.yellow(result.stats.ignoredRules.toString())} 份`);

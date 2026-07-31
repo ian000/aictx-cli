@@ -1,4 +1,5 @@
 import { intro, outro, spinner, select, text, multiselect, isCancel, cancel, confirm } from '@clack/prompts';
+import type { Option } from '@clack/prompts';
 import pc from 'picocolors';
 
 export const cliUX = {
@@ -30,7 +31,7 @@ export const cliUX = {
     return this.checkCancel(result);
   },
 
-  async askSelect<T>(message: string, options: { value: T; label: string; hint?: string }[]) {
+  async askSelect<T extends string | boolean | number>(message: string, options: Option<T>[]) {
     const result = await select({
       message,
       options,
@@ -38,9 +39,9 @@ export const cliUX = {
     return this.checkCancel(result);
   },
 
-  async askMultiSelect<T>(
+  async askMultiSelect<T extends string | boolean | number>(
     message: string,
-    options: { value: T; label: string; hint?: string }[],
+    options: Option<T>[],
     required: boolean = true,
     initialValues?: T[]
   ) {

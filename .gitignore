@@ -4,3 +4,6 @@ node_modules
 .release-notes/
 .obsidian/
 graphify-out/
+.aictx/runs/
+.aictx/cache/
+.aictx/tmp/

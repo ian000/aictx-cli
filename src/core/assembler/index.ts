@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
 import { glob } from 'tinyglobby';
-import { countTokens } from '../../utils/token.js';
+import { countTokens } from '../../context/token.js';
 import { consola } from 'consola';
 
 export interface AssembleResult {

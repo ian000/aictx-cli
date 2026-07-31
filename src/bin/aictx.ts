@@ -10,6 +10,8 @@ import { infoCommand } from '../commands/info.js';
 import { indexCommand } from '../commands/index.js';
 import { routeCommand } from '../commands/route.js';
 import { graphCommand } from '../commands/graph.js';
+import { contextCommand } from '../commands/context.js';
+import { runCommand } from '../commands/run.js';
 import { initI18n } from '../locales/index.js';
 import pkg from '../../package.json';
 
@@ -41,6 +43,8 @@ infoCommand(cli as any);
 indexCommand(cli as any);
 routeCommand(cli as any);
 graphCommand(cli as any);
+contextCommand(cli as any);
+runCommand(cli as any);
 
 cli.help();
 cli.version(pkg.version);

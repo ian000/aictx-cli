@@ -2,8 +2,7 @@ import { consola } from 'consola';
 import pc from 'picocolors';
 import path from 'path';
 import { ConfigParser } from '../config/index.js';
-import { diagnoseDrift } from '../core/doctor/index.js';
-import { assembleRules } from '../core/assembler/index.js';
+import { assembleRules, diagnoseDrift } from '../development/index.js';
 import fs from 'fs-extra';
 
 export const doctorCommand = (cli: any) => {

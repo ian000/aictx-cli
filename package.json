@@ -1,14 +1,17 @@
 {
   "name": "aictx-cli",
-  "version": "1.6.4",
-  "description": "Context as Code (CaC) CLI for AI-Assisted Engineering",
+  "version": "2.0.0",
+  "description": "Context as Code infrastructure for AI-assisted engineering and agent runtime",
   "type": "module",
   "bin": {
     "aictx": "dist/aictx.js"
   },
   "files": [
     "dist",
-    "vendor"
+    "vendor",
+    "LICENSE",
+    "NOTICE",
+    "COMMERCIAL_LICENSE.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -37,7 +40,7 @@
     "rules"
   ],
   "author": "ian000",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=20"
   },

@@ -130,7 +130,7 @@ roles:
 
 ## 核心业务节点 (God Nodes)
 系统运行的核心中枢，这些组件被大量其他模块调用，修改时必须极其谨慎。
-${godNodes.map(n => `- **${n}**`).join('\n')}
+${godNodes.map((n: string) => `- **${n}**`).join('\n')}
 
 ## 拓扑结构分析报告 (Topology Analysis)
 ${rawReport}

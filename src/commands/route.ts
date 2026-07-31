@@ -1,11 +1,11 @@
-import { defineCommand } from 'cac';
+import type { CAC } from 'cac';
 import { consola } from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
-import { buildMocRouteIndex, rankMocDocuments } from '../core/moc/index.js';
+import { buildMocRouteIndex, rankMocDocuments } from '../context/index.js';
 
-export const routeCommand = (cli: ReturnType<typeof defineCommand>) => {
+export const routeCommand = (cli: CAC) => {
   cli.command('route <question>', '基于 MOC 路由表为问题推荐应优先阅读的原子文档')
     .option('-d, --dir <dir>', '指定要扫描的文档根目录', { default: 'aictx-docs' })
     .option('-n, --limit <limit>', '最多返回多少个候选文档', { default: '5' })

@@ -15,6 +15,18 @@ export interface AictxConfig {
     architecturePath?: string;
     hasArchitectureSummary?: boolean;
   };
+  context?: {
+    cacheDir?: string;
+    docsDir?: string;
+    graphPath?: string;
+    bundlePath?: string;
+  };
+  runtime?: {
+    runsDir?: string;
+    defaultBudget?: number;
+    documentLimit?: number;
+  };
+  development?: Record<string, unknown>;
   overrides?: Record<string, any>;
 }
 
@@ -64,6 +76,28 @@ export class ConfigParser {
     const invalidTags = (config.tags ?? []).filter((tag: unknown) => typeof tag !== 'string');
     if (invalidTags.length > 0) {
       throw new Error('tags 必须是字符串数组。');
+    }
+
+    if (config.context !== undefined && (!config.context || typeof config.context !== 'object' || Array.isArray(config.context))) {
+      throw new Error('context 必须是对象。');
+    }
+    if (config.runtime !== undefined && (!config.runtime || typeof config.runtime !== 'object' || Array.isArray(config.runtime))) {
+      throw new Error('runtime 必须是对象。');
+    }
+    for (const field of ['cacheDir', 'docsDir', 'graphPath', 'bundlePath']) {
+      if (config.context?.[field] !== undefined && typeof config.context[field] !== 'string') {
+        throw new Error(`context.${field} 必须是字符串。`);
+      }
+    }
+    for (const field of ['runsDir']) {
+      if (config.runtime?.[field] !== undefined && typeof config.runtime[field] !== 'string') {
+        throw new Error(`runtime.${field} 必须是字符串。`);
+      }
+    }
+    for (const field of ['defaultBudget', 'documentLimit']) {
+      if (config.runtime?.[field] !== undefined && (!Number.isFinite(config.runtime[field]) || config.runtime[field] < 0)) {
+        throw new Error(`runtime.${field} 必须是非负数字。`);
+      }
     }
 
     return {

@@ -1,4 +1,4 @@
-import { defineCommand } from 'cac';
+import type { CAC } from 'cac';
 import { consola } from 'consola';
 import { analyzeWithGraphify, printGraphifyArtifact, runGraphify } from '../utils/graphify.js';
 
@@ -11,7 +11,7 @@ function getFlagValue(args: string[], flag: string, fallback: string) {
   return args[index + 1];
 }
 
-export const graphCommand = (cli: ReturnType<typeof defineCommand>) => {
+export const graphCommand = (cli: CAC) => {
   cli.command('graph [...args]', 'Proxy command for local graphify-go AST engine')
     .allowUnknownOptions()
     .action(async () => {

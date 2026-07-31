@@ -42,7 +42,11 @@ async function replaceCacheWithCopy(cacheDir: string, sourceDir: string): Promis
   }
 }
 
-export async function fetchRules(repository: string | undefined, cacheDir: string): Promise<void> {
+export async function fetchRules(
+  repository: string | undefined,
+  cacheDir: string,
+  options: { silent?: boolean } = {}
+): Promise<void> {
   if (!repository || repository.trim() === '' || repository === 'builtin') {
     // 采用内置模板 (Builtin fallback)
     const __filename = fileURLToPath(import.meta.url);
@@ -66,14 +70,14 @@ export async function fetchRules(repository: string | undefined, cacheDir: strin
     if (!fs.existsSync(localPath)) {
       throw new Error(`本地仓库路径不存在: ${localPath}`);
     }
-    consola.start(`正在从本地目录同步规则: ${localPath}`);
+    if (!options.silent) consola.start(`正在从本地目录同步规则: ${localPath}`);
     await replaceCacheWithCopy(cacheDir, localPath);
-    consola.success(`本地规则同步完成 -> ${cacheDir}`);
+    if (!options.silent) consola.success(`本地规则同步完成 -> ${cacheDir}`);
     return;
   }
 
   // 否则认为是 Git URL
-  consola.start(`正在从远程 Meta-Repo 同步规则: ${repository}`);
+  if (!options.silent) consola.start(`正在从远程 Meta-Repo 同步规则: ${repository}`);
 
   const stagingDir = await createStagingDir(cacheDir);
   try {
@@ -90,5 +94,5 @@ export async function fetchRules(repository: string | undefined, cacheDir: strin
     throw error;
   }
 
-  consola.success(`远程规则 Clone 成功 -> ${cacheDir}`);
+  if (!options.silent) consola.success(`远程规则 Clone 成功 -> ${cacheDir}`);
 }

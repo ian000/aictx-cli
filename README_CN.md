@@ -1,12 +1,12 @@
 <div align="center">
   <h1>aictx-cli 🧠</h1>
-  <p><b>Context as Code (CaC) CLI for AI-Assisted Engineering</b></p>
+  <p><b>面向 AI 辅助开发与 Agent Runtime 的 Context as Code 基础设施</b></p>
   <p><i>Stop fighting the AI. Start engineering its context.</i></p>
 </div>
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-orange.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/aictx-cli.svg)](https://www.npmjs.com/package/aictx-cli)
 [![Build Status](https://github.com/kings2017/aictx-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/kings2017/aictx-cli/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
@@ -19,7 +19,7 @@
 
 <br />
 
-**aictx-cli** (AI Context CLI) 是一款专为 AI 辅助编程（Codex, Trae, Cursor, Windsurf, OpenCode, Claude Code 等）打造的 **Context as Code (CaC)** 基础设施，更是当下火热的 **“Harness Engineering (AI 驾驭工程)”** 理念的独特实现。它就像是给你的 AI 助手外接了一个永久记忆与防腐装甲。
+**aictx-cli** (AI Context CLI) 是面向 AI 辅助开发和团队内部 Agent Runtime 的 **Context as Code (CaC)** 基础设施。开发命令负责维护规则、文档、索引、图谱和 IDE 配置；Runtime 命令只读取版本化的上下文快照，为单次 Agent 任务准备上下文，不反向修改这些来源。
 
 我们致力于为 AI 编程时代提供三大核心基础设施能力：
 1. **🌍 跨设备与跨 IDE 同步**：无论是 Codex、Trae、Cursor、Windsurf 还是 OpenCode、Claude Code，一份架构规则 (Rules) 与本地技能 (Skills)，一键编译并动态注入所有终端，彻底终结“不同 AI 写出不同风格”的灾难。
@@ -165,6 +165,144 @@ aictx route "支付下单流程是怎么工作的？"
 
 这个命令会基于 `aictx-docs/**/00-Index.md` 的元数据给原子文档排序，让 AI 先阅读最相关的候选文档，再决定是否需要全局检索。
 
+### 5. 为 Agent 运行准备上下文
+
+当前 Runtime 是 **Agent 的上下文准备与审计层**，不是完整的 Agent 执行器。它负责选择规则和文档、检查上下文是否过期、控制 Token 预算、记录每次准备结果。它目前不负责调用模型、执行工具、任务调度或失败重试；这些仍由 Codex 或团队自己的 Agent Host 负责。
+
+```text
+规则 + MOC 文档 + 图谱
+          |
+          | aictx sync / context build
+          v
+Context Bundle -- context prepare "<任务>" --> Context Packet --> Agent Host
+                                               +--> Run Manifest
+```
+
+#### 第一次使用
+
+```bash
+# 1. 初始化项目；默认选择 Codex
+aictx init
+
+# 2. 同步规则、注入 IDE，并生成 Context Bundle
+aictx sync
+
+# 3. 确认 Bundle 与当前来源一致
+aictx context verify
+```
+
+`aictx sync` 同时完成规则同步、IDE 注入和 Bundle 构建。如果只需要从 `aictx.json` 配置的规则仓库重新拉取规则并刷新 Runtime 快照，不重新注入 IDE，使用：
+
+```bash
+aictx context build
+```
+
+#### 每次 Agent 任务如何运行
+
+```bash
+# 人类可读摘要，同时写入 Run Manifest
+aictx context prepare "修复支付下单问题"
+
+# 包含完整规则和文档内容的 Markdown
+aictx context prepare "修复支付下单问题" --codex
+
+# Agent Host 读取的机器可读 JSON
+aictx context prepare "修复支付下单问题" --json
+```
+
+`context prepare` 会自动检查 Bundle 是否过期，不需要每次手动先运行 `context verify`。`--codex` 只输出可交给 Codex 的上下文，**不会自动启动 Codex**。
+
+默认输出示例：
+
+```text
+Context Packet: a465db4045ad932d8316642d
+status: ready
+budget: 4611/8000
+rules: 5, documents: 0
+manifest: .aictx/runs/55daeca9-7743-44fb-92ef-fba783e4f36d.json
+```
+
+如果必带的 `alwaysApply` 规则已超过预算，Packet 会设置 `budgetExceeded: true`，可选规则和文档不会继续塞入。此时应提高 `--budget` 或精简必带规则。
+
+Runtime 使用三类数据：
+
+- **Context Bundle**：`.aictx/context-bundle.json`，保存规则、MOC 文档、图谱元数据和来源指纹。
+- **Context Packet**：`context prepare` 的输出。它包含必带的 `alwaysApply` 规则，以及在 Token 预算内按任务相关性选中的可选规则和文档。
+- **Run Manifest**：`.aictx/runs/<run-id>.json`，记录任务、Bundle 版本、选中的内容和新鲜度结果。它只表示“上下文已准备”，不表示 Agent 任务已执行或成功。
+
+#### 常用参数
+
+| 参数 | 作用 | 默认值 |
+|---|---|---|
+| `--budget <tokens>` | 本次 Context Packet 的 Token 预算 | `8000` |
+| `--limit <count>` | 最多选择的 MOC 文档数 | `3` |
+| `--json` | 输出完整 JSON，供 Agent Host 解析 | 关闭 |
+| `--codex` | 输出包含完整内容的 Markdown | 关闭 |
+| `--no-manifest` | 只生成 Packet，不保存运行记录 | 关闭 |
+| `--allow-stale` | 允许宿主继续获取过期 Packet，其状态仍为 `context_stale` | 关闭 |
+| `--bundle <path>` | 覆盖 Bundle 文件路径 | `.aictx/context-bundle.json` |
+| `--runs-dir <dir>` | 覆盖 Run Manifest 目录 | `.aictx/runs` |
+
+#### 默认配置
+
+`aictx init` 会在 `aictx.json` 中生成：
+
+```json
+{
+  "context": {
+    "cacheDir": ".aictx-cache",
+    "docsDir": "aictx-docs",
+    "graphPath": "graphify-out/graph.json",
+    "bundlePath": ".aictx/context-bundle.json"
+  },
+  "runtime": {
+    "runsDir": ".aictx/runs",
+    "defaultBudget": 8000,
+    "documentLimit": 3
+  }
+}
+```
+
+#### Agent Host 接入方式
+
+Agent Host 应执行 `context prepare --json`，检查 `packet.status`，再把 `packet` 交给模型或 Agent。以下是伪代码：
+
+```ts
+const prepared = JSON.parse(
+  await run("aictx", ["context", "prepare", task, "--json"])
+);
+
+if (prepared.packet.status !== "ready") {
+  throw new Error("Context 已过期，需要重建 Bundle");
+}
+
+await agent.run({ task, context: prepared.packet });
+```
+
+#### 上下文过期如何处理
+
+`context verify` 和 `context prepare` 会检查 Bundle 记录的规则、MOC 文档、图谱和 `aictx.json`。已记录文件被修改或删除，以及规则或文档目录新增 Markdown 时，会返回 `context_stale`。
+
+| 变化 | 正确操作 |
+|---|---|
+| 规则仓库或 tags 变化 | `aictx sync` |
+| 文档新增、移动或 Frontmatter 变化 | `aictx index` 后运行 `aictx context build` |
+| 代码结构变化，图谱已落后 | `aictx graph analyze --dir . --out ./graphify-out` 后运行 `aictx context build` |
+| 只修改了已纳入 Bundle 的文档 | `aictx context build` |
+
+退出码约定：正常为 `0`，Bundle 过期为 `2`，命令或配置错误为 `1`。`--allow-stale` 会允许 `context prepare` 以退出码 `0` 返回过期 Packet，但 `packet.status` 仍为 `context_stale`。
+
+#### 查看运行记录
+
+`--json` 输出的 `manifest.runId` 是 Run ID。默认和 `--codex` 输出会显示 `.aictx/runs/<run-id>.json` 路径，其文件名中不带 `.json` 的部分就是 Run ID：
+
+```bash
+aictx run inspect "<run-id>"
+aictx run inspect "<run-id>" --json
+```
+
+Runtime 只读检查上下文来源，除了写入 `.aictx/runs/` 记录外，不会自动修改规则、文档或图谱。
+
 ## 🛠️ CLI 命令一览
 
 > **设计哲学：无感化 (Invisible CLI)**
@@ -176,6 +314,10 @@ aictx route "支付下单流程是怎么工作的？"
 | `aictx sync` | 解析、过滤并向 IDE 动态注入 AI 上下文规则 (Context Assembler) | **🪝 钩子静默 / 🤖 AI** (拉取最新规约时) |
 | `aictx index`| 编译生成 MOC 双链路由表 | **🤖 AI 自动** (新建或修改文档后，刷新 AI 索引) |
 | `aictx route "<问题>"` | 基于 MOC 路由表推荐应优先阅读的原子文档 | **🤖 AI 自动** (读文档或全局检索前执行) |
+| `aictx context build` | 重建版本化 Context Bundle | **🤖 AI 自动** (上下文来源变化后) |
+| `aictx context verify` | 检查 Bundle 与来源是否一致 | **🤖 Agent 宿主** (准备任务前) |
+| `aictx context prepare "<任务>"` | 生成 Context Packet 并记录 Run Manifest | **🤖 Agent 宿主** (任务开始时) |
+| `aictx run inspect "<run-id>"` | 查看历史 Run Manifest | **👤 / 🤖** (审计与排错) |
 | `aictx resolve`| 交互式解决业务上下文冲突 | **👤 人类手动** (发现多个规则描述同一边界时介入) |
 | `aictx doctor` | 诊断本地规则漂移与 Token 健康度 | **🪝 钩子静默** (推荐绑定 Git `pre-commit` 钩子) |
 
@@ -188,6 +330,15 @@ aictx route "支付下单流程是怎么工作的？"
 ### Unreleased
 
 暂无更新。
+
+### v2.0.0 - 2026-08-01
+
+- 明确拆分 Shared Context Core、Development Plane、Runtime Plane 三层职责，并固化单向依赖边界。
+- 新增版本化 Context Bundle、任务级 Context Packet、来源新鲜度检查和可审计 Run Manifest。
+- 新增 `aictx context build`、`aictx context verify`、`aictx context prepare`、`aictx run inspect`；`aictx sync` 会自动刷新 Bundle。
+- 保持 v1 配置和原有 `sync` 主流程程兼容；Bundle 构建失败不会撤销已完成的 IDE 规则同步。
+- 补充 Runtime 完整使用说明，明确能力边界、日常流程、参数、配置、过期处理和 Agent Host 接入方式。
+- 许可证由 MIT 改为 PolyForm Noncommercial 1.0.0；商业用途必须单独取得书面授权，历史 MIT 版本继续适用原许可。
 
 ### v1.6.4 - 2026-08-01
 
@@ -229,13 +380,16 @@ aictx 致力于成为 AI 辅助编程时代的标准基础设施。无论是帮�
 - [x] **Phase 3: IDE 与工作流深度集成**
   - Trae / Cursor / Windsurf / Codex / OpenCode / Claude Code 原生配置注入
   - IDE 本地 Skill 智能生态融合 (`aictx-graphify`)
-- [ ] **Phase 4: 企业级协同基建**
-  - 支持多源（Git, Local, HTTP）规则拉取与远端分发
-  - CI/CD 流水线防腐拦截与架构卡点
+- [x] **Phase 4: 内部 Agent Runtime 基础**
+  - Shared Context Core 稳定契约与版本化快照
+  - 只读 Context Packet 准备、来源检查和 Run Manifest
+- [ ] **Phase 5: Runtime 工程化加固**
+  - Policy Gate、宿主适配器、可观测、回放与评测
+  - 仅在部署、权限、团队归属或发布节奏确有差异时拆包或拆仓库
 
 ## 🤝 参与贡献
 
-我们非常欢迎来自社区的贡献！无论是提出 Issue、提交 PR，还是分享你在 Context as Code 方面的最佳实践。
+欢迎社区以非商业方式提交 Issue、PR，或分享 Context as Code 实践。贡献内容按项目当前许可证分发。
 
 1. Fork 本仓库
 2. 创建你的特性分支 (`git checkout -b feature/AmazingFeature`)
@@ -245,6 +399,8 @@ aictx 致力于成为 AI 辅助编程时代的标准基础设施。无论是帮�
 
 发布流程与约定见：[RELEASING.md](./RELEASING.md)
 
-## 📄 开源协议
+## 📄 许可证
 
-本项目基于 [MIT License](LICENSE) 协议开源。
+当前源码按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供。在条款范围内允许非商业使用、修改和分发；任何商业用途都需要单独取得书面授权，详见[商业授权说明](COMMERCIAL_LICENSE.md)。
+
+本项目属于 Source-Available，不再称为 OSI Open Source。此前已经按 MIT 发布的历史版本继续适用其原始 MIT 条款。

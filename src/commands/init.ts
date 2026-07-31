@@ -1,4 +1,4 @@
-import { defineCommand } from 'cac';
+import type { CAC } from 'cac';
 import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
@@ -14,7 +14,7 @@ import {
   type SupportedIde
 } from '../core/ide/index.js';
 
-export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
+export const initCommand = (cli: CAC) => {
   cli.command('init', '初始化 aictx 配置')
     .option('--onboard', '直接进入存量项目逆向接管流程')
     .option('-y, --yes', '跳过所有确认提示')
@@ -166,6 +166,18 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
           architecturePath: fromArch,
           hasArchitectureSummary: Boolean(archSummary && archSummary.trim().length > 0)
         },
+        context: {
+          cacheDir: '.aictx-cache',
+          docsDir: 'aictx-docs',
+          graphPath: 'graphify-out/graph.json',
+          bundlePath: '.aictx/context-bundle.json'
+        },
+        runtime: {
+          runsDir: '.aictx/runs',
+          defaultBudget: 8000,
+          documentLimit: 3
+        },
+        development: {},
         overrides: {}
       };
 
