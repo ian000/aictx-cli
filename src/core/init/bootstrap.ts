@@ -7,6 +7,7 @@ export interface InitBootstrapOptions {
   fromPrd?: string;
   fromArch?: string;
   archSummary?: string;
+  enableNpmTrustedPublisher?: boolean;
 }
 
 export interface ImportedArtifact {
@@ -162,6 +163,132 @@ ${hasArchitectureInput
 `;
 }
 
+function createNpmTrustedPublisherWorkflow(): string {
+  return `name: npm Trusted Publisher Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package version
+        run: |
+          TAG_VERSION="\${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          test "$TAG_VERSION" = "$PACKAGE_VERSION"
+
+      - name: Run tests
+        run: npm run test --if-present
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+`;
+}
+
+function createNpmTrustedPublisherGuide(projectName: string): string {
+  return `---
+tags:
+  - project
+  - release
+  - npm
+  - trusted-publisher
+  - ${projectName}
+---
+# npm Trusted Publisher Release
+
+## Default Release Path
+
+- Publish source: GitHub Actions only.
+- npm auth: Trusted Publisher / OIDC.
+- Token policy: do not add \`NPM_TOKEN\` for normal releases.
+- Workflow file: \`.github/workflows/npm-publish.yml\`.
+- Tag format: \`vX.Y.Z\`.
+- Package version must exactly match the pushed tag.
+
+## npm Package Settings
+
+Configure the package on npm:
+
+- Publisher: GitHub Actions.
+- Organization or user: your GitHub owner.
+- Repository: this repository name.
+- Workflow filename: \`npm-publish.yml\`.
+- Environment name: leave empty unless the workflow uses a GitHub Actions environment.
+- Allowed action: \`npm publish\`.
+- Publishing access: allow Trusted Publisher or granular access tokens with 2FA bypass.
+
+## Release Steps
+
+1. Update \`package.json\` version.
+2. Run \`npm test\` and \`npm run build --if-present\`.
+3. Commit and push to \`main\`.
+4. Create and push the matching tag, for example \`git tag -a v1.0.1 -m "v1.0.1"\`.
+5. Push the tag with \`git push origin v1.0.1\`.
+6. Verify the GitHub Actions run and npm package version.
+
+## Guardrails
+
+- Do not rename \`.github/workflows/npm-publish.yml\` after npm Trusted Publisher is configured.
+- Keep \`id-token: write\` on the publish job.
+- Keep \`registry-url: https://registry.npmjs.org\` in \`actions/setup-node\`.
+- Keep \`npm publish --provenance\` so npm records build provenance.
+- If publish fails after the tag is pushed, ship a new patch version instead of rewriting a published version.
+`;
+}
+
+async function scaffoldNpmTrustedPublisherArtifacts(
+  cwd: string,
+  projectName: string,
+  generatedArtifacts: string[],
+  warnings: string[]
+): Promise<void> {
+  const workflowPath = path.join(cwd, '.github', 'workflows', 'npm-publish.yml');
+  const guidePath = path.join(cwd, 'aictx-docs', 'project', 'npm-trusted-publisher-release.md');
+
+  await fs.ensureDir(path.dirname(workflowPath));
+  await fs.ensureDir(path.dirname(guidePath));
+
+  if (await fs.pathExists(workflowPath)) {
+    warnings.push(`保留现有 npm 发布 workflow，未覆盖: ${toPosixRelative(cwd, workflowPath)}`);
+  } else {
+    await fs.writeFile(workflowPath, createNpmTrustedPublisherWorkflow(), 'utf-8');
+    generatedArtifacts.push(toPosixRelative(cwd, workflowPath));
+  }
+
+  if (await fs.pathExists(guidePath)) {
+    warnings.push(`保留现有 npm Trusted Publisher 发布说明，未覆盖: ${toPosixRelative(cwd, guidePath)}`);
+  } else {
+    await fs.writeFile(guidePath, createNpmTrustedPublisherGuide(projectName), 'utf-8');
+    generatedArtifacts.push(toPosixRelative(cwd, guidePath));
+  }
+}
+
 export async function scaffoldBootstrapArtifacts(options: InitBootstrapOptions): Promise<BootstrapArtifacts> {
   const docBase = path.resolve(options.cwd, 'aictx-docs');
   const productDir = path.join(docBase, 'product');
@@ -170,6 +297,10 @@ export async function scaffoldBootstrapArtifacts(options: InitBootstrapOptions):
   const importedArtifacts: ImportedArtifact[] = [];
   const generatedArtifacts: string[] = [];
   const warnings: string[] = [];
+
+  await fs.ensureDir(productDir);
+  await fs.ensureDir(architectureDir);
+  await fs.ensureDir(projectDir);
 
   if (options.fromPrd) {
     const result = await importPath(options.cwd, 'prd', options.fromPrd, productDir);
@@ -199,6 +330,15 @@ export async function scaffoldBootstrapArtifacts(options: InitBootstrapOptions):
     );
     await fs.writeFile(todoPath, todoContent, 'utf-8');
     generatedArtifacts.push(toPosixRelative(options.cwd, todoPath));
+  }
+
+  if (options.enableNpmTrustedPublisher !== false) {
+    await scaffoldNpmTrustedPublisherArtifacts(
+      options.cwd,
+      options.projectName,
+      generatedArtifacts,
+      warnings
+    );
   }
 
   return { importedArtifacts, generatedArtifacts, warnings };

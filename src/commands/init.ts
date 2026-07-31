@@ -17,6 +17,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
     .option('--from-prd <path>', '导入现有 PRD / 产品文档文件或目录')
     .option('--from-arch <path>', '导入现有技术架构 / 技术栈文档文件或目录')
     .option('--arch <text>', '直接提供技术架构摘要，生成架构种子文档')
+    .option('--no-npm-publish-workflow', '不生成 npm Trusted Publisher / GitHub Actions OIDC 发布模板')
     .action(async (options) => {
       cliUX.intro('初始化 Context as Code 基础设施');
       const defaultIdes = ['codex'];
@@ -224,7 +225,8 @@ _运行 \`aictx index\` 自动生成路由表_
         projectName,
         fromPrd,
         fromArch,
-        archSummary
+        archSummary,
+        enableNpmTrustedPublisher: options.npmPublishWorkflow !== false
       });
 
       for (const warning of bootstrapArtifacts.warnings) {

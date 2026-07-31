@@ -39,6 +39,12 @@ describe('init bootstrap artifacts', () => {
     expect(todo).toContain('aictx-docs/product/prd.md');
     expect(todo).toContain('aictx-docs/architecture/tech-stack.md');
     expect(todo).toContain('已提供技术架构输入');
+    expect(result.generatedArtifacts).toContain('.github/workflows/npm-publish.yml');
+    expect(result.generatedArtifacts).toContain('aictx-docs/project/npm-trusted-publisher-release.md');
+
+    const workflow = await fs.readFile(path.join(TEST_DIR, '.github/workflows/npm-publish.yml'), 'utf-8');
+    expect(workflow).toContain('id-token: write');
+    expect(workflow).toContain('npm publish --access public --provenance');
   });
 
   it('creates an architecture seed doc when only summary is provided', async () => {
@@ -83,5 +89,30 @@ describe('init bootstrap artifacts', () => {
     expect(result.importedArtifacts[0]?.status).toBe('preserved');
     expect(result.warnings[0]).toContain('保留现有 PRD 文档');
     expect(await fs.readFile(path.join(TEST_DIR, 'aictx-docs/product/prd.md'), 'utf-8')).toContain('# Existing PRD');
+  });
+
+  it('can skip npm trusted publisher artifacts when explicitly disabled', async () => {
+    const result = await scaffoldBootstrapArtifacts({
+      cwd: TEST_DIR,
+      projectName: 'demo-app',
+      enableNpmTrustedPublisher: false
+    });
+
+    expect(result.generatedArtifacts).not.toContain('.github/workflows/npm-publish.yml');
+    expect(await fs.pathExists(path.join(TEST_DIR, '.github/workflows/npm-publish.yml'))).toBe(false);
+  });
+
+  it('preserves an existing npm publish workflow', async () => {
+    const workflowPath = path.join(TEST_DIR, '.github/workflows/npm-publish.yml');
+    await fs.ensureDir(path.dirname(workflowPath));
+    await fs.writeFile(workflowPath, 'name: custom\n');
+
+    const result = await scaffoldBootstrapArtifacts({
+      cwd: TEST_DIR,
+      projectName: 'demo-app'
+    });
+
+    expect(result.warnings.some((warning) => warning.includes('保留现有 npm 发布 workflow'))).toBe(true);
+    expect(await fs.readFile(workflowPath, 'utf-8')).toBe('name: custom\n');
   });
 });

@@ -8,6 +8,34 @@ const { createReleaseHelper } = require('../scripts/release-helper.cjs');
 describe('release helper', () => {
   const TEST_DIR = path.join(process.cwd(), '.test-release-helper');
 
+  async function writeTrustedPublisherWorkflow(content?: string) {
+    const workflowPath = path.join(TEST_DIR, '.github', 'workflows', 'ci.yml');
+    await fs.ensureDir(path.dirname(workflowPath));
+    await fs.writeFile(workflowPath, content ?? `name: CI/CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://registry.npmjs.org'
+      - name: Verify tag matches package version
+        run: |
+          TAG_VERSION="\${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+`);
+  }
+
   beforeEach(async () => {
     await fs.ensureDir(TEST_DIR);
     execSync('git init -b main', { cwd: TEST_DIR, stdio: 'ignore' });
@@ -44,5 +72,34 @@ describe('release helper', () => {
 
     const helper = createReleaseHelper(TEST_DIR);
     expect(helper.getPreviousTag('v3.0.0')).toBe('v2.0.0');
+  });
+
+  it('detects a trusted publisher ready workflow', async () => {
+    await writeTrustedPublisherWorkflow();
+
+    const helper = createReleaseHelper(TEST_DIR);
+    const checks = helper.getTrustedPublisherChecks();
+
+    expect(checks.ready).toBe(true);
+    expect(checks.workflow).toBe('.github/workflows/ci.yml');
+    expect(checks.checks.every((check: { ok: boolean }) => check.ok)).toBe(true);
+  });
+
+  it('blocks tagging when the trusted publisher workflow is incomplete', async () => {
+    await writeTrustedPublisherWorkflow(`name: CI/CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    steps:
+      - run: npm publish
+`);
+
+    const helper = createReleaseHelper(TEST_DIR);
+    expect(() => helper.ensureTrustedPublisherReady()).toThrow(/Trusted Publisher workflow is not ready/);
   });
 });

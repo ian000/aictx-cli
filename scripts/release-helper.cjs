@@ -7,6 +7,7 @@ const cp = require("child_process");
 function createReleaseHelper(repoCwd = process.cwd()) {
   const packageJsonPath = path.join(repoCwd, "package.json");
   const releaseNotesDir = path.join(repoCwd, ".release-notes");
+  const trustedPublisherWorkflowPath = path.join(repoCwd, ".github", "workflows", "ci.yml");
   const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
   function run(commandText, options = {}) {
@@ -95,12 +96,56 @@ ${changes}
     return filePath;
   }
 
+  function getTrustedPublisherChecks() {
+    const workflowRelativePath = path.relative(repoCwd, trustedPublisherWorkflowPath);
+    if (!fs.existsSync(trustedPublisherWorkflowPath)) {
+      return {
+        ready: false,
+        workflow: workflowRelativePath,
+        checks: [
+          { name: "workflow exists", ok: false }
+        ]
+      };
+    }
+
+    const workflow = fs.readFileSync(trustedPublisherWorkflowPath, "utf-8");
+    const checks = [
+      { name: "tag trigger v*", ok: /tags:\s*\n\s*-\s*['"]?v\*/.test(workflow) },
+      { name: "publish job has id-token: write", ok: /id-token:\s*write/.test(workflow) },
+      { name: "npm registry configured", ok: /registry-url:\s*['"]?https:\/\/registry\.npmjs\.org['"]?/.test(workflow) },
+      { name: "tag matches package version", ok: /GITHUB_REF_NAME#v/.test(workflow) && /package\.json/.test(workflow) },
+      { name: "npm publish uses provenance", ok: /npm publish\b[\s\S]*--provenance/.test(workflow) }
+    ];
+
+    return {
+      ready: checks.every((check) => check.ok),
+      workflow: workflowRelativePath,
+      checks
+    };
+  }
+
+  function ensureTrustedPublisherReady() {
+    const result = getTrustedPublisherChecks();
+
+    if (result.ready) {
+      return;
+    }
+
+    const missing = result.checks
+      .filter((check) => !check.ok)
+      .map((check) => check.name)
+      .join(", ");
+
+    throw new Error(`Trusted Publisher workflow is not ready (${result.workflow}): ${missing}`);
+  }
+
   function printPlan() {
     const currentTag = getCurrentTag();
     const previousTag = getPreviousTag(currentTag);
     const commits = getCommitSubjects(previousTag);
     const releaseNotes = buildReleaseNotes(currentTag, previousTag, commits);
     const notesPath = writeReleaseNotes(currentTag, releaseNotes);
+    const trustedPublisher = getTrustedPublisherChecks();
 
     console.log(`Package: ${pkg.name}`);
     console.log(`Version: ${pkg.version}`);
@@ -110,6 +155,11 @@ ${changes}
     console.log(`Previous tag: ${previousTag || "none"}`);
     console.log(`Tag already exists: ${tagExists(currentTag) ? "yes" : "no"}`);
     console.log(`Release notes: ${path.relative(repoCwd, notesPath)}`);
+    console.log(`Trusted Publisher workflow: ${trustedPublisher.workflow}`);
+    console.log(`Trusted Publisher ready: ${trustedPublisher.ready ? "yes" : "no"}`);
+    for (const check of trustedPublisher.checks) {
+      console.log(`  - ${check.ok ? "ok" : "missing"}: ${check.name}`);
+    }
     console.log("");
     console.log(releaseNotes);
   }
@@ -129,6 +179,8 @@ ${changes}
     if (tagExists(currentTag)) {
       throw new Error(`tag already exists: ${currentTag}`);
     }
+
+    ensureTrustedPublisherReady();
 
     const previousTag = getPreviousTag(currentTag);
     const commits = getCommitSubjects(previousTag);
@@ -157,6 +209,8 @@ ${changes}
     getCommitSubjects,
     buildReleaseNotes,
     writeReleaseNotes,
+    getTrustedPublisherChecks,
+    ensureTrustedPublisherReady,
     printPlan,
     createTag
   };

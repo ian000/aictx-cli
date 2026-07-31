@@ -27,13 +27,20 @@ npm run release:plan
 ```
 
 This writes `.release-notes/vX.Y.Z.md` and shows whether the version tag already exists.
+It also verifies the Trusted Publisher workflow guardrails before tagging:
+
+- tag trigger `v*`
+- publish job `id-token: write`
+- npm registry configured through `actions/setup-node`
+- tag version matches `package.json`
+- publish command uses `npm publish --provenance`
 
 4. Merge to `main`.
 5. Create and push the tag:
 
 ```bash
 npm run release:tag
-git push origin v1.5.1
+git push origin vX.Y.Z
 ```
 
 6. Watch `.github/workflows/ci.yml`.
@@ -58,3 +65,5 @@ git push origin v1.5.1
 - Keep publishing on GitHub-hosted runners only
 - Keep `id-token: write` on the publish job
 - Do not reintroduce `NPM_TOKEN` secrets for normal releases
+- Keep `npm publish --provenance` enabled
+- For projects initialized with `aictx init`, the default npm publish workflow is `.github/workflows/npm-publish.yml`; configure the same filename in npm Trusted Publisher settings.

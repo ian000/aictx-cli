@@ -99,6 +99,13 @@ aictx init --from-prd ./docs/prd.md --arch "Frontend Vue 3 + Vite, Backend NestJ
 
 This will import the source docs into `aictx-docs/product` and `aictx-docs/architecture`, then generate a bootstrap TODO under `aictx-docs/project`.
 
+By default, `aictx init` also scaffolds npm Trusted Publisher release assets:
+
+- `.github/workflows/npm-publish.yml`: GitHub Actions OIDC workflow for `npm publish --provenance`
+- `aictx-docs/project/npm-trusted-publisher-release.md`: npm package settings and release checklist
+
+Use `aictx init --no-npm-publish-workflow` when the project is not an npm package.
+
 ### 3. Sync Team Rules
 
 Fetch and inject the latest team context conventions with one click:

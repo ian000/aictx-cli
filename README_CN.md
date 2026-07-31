@@ -97,6 +97,13 @@ aictx init --from-prd ./docs/prd.md --arch "Frontend Vue 3 + Vite，Backend Nest
 
 CLI 会把这些输入自动导入到 `aictx-docs/product`、`aictx-docs/architecture`，并在 `aictx-docs/project` 下生成一份 bootstrap TODO，供 AI 后续直接开始拆解与搭架子。
 
+默认情况下，`aictx init` 还会生成 npm Trusted Publisher 发布资产：
+
+- `.github/workflows/npm-publish.yml`：基于 GitHub Actions OIDC 的 `npm publish --provenance` 工作流
+- `aictx-docs/project/npm-trusted-publisher-release.md`：npm 后台设置项与发布检查清单
+
+如果当前项目不是 npm 包，可以使用 `aictx init --no-npm-publish-workflow` 跳过生成。
+
 ### 3. 一键同步你的 AI 大脑
 
 拉取并动态注入最新的上下文规范到当前 IDE：
