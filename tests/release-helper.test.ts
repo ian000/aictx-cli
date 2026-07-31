@@ -10,7 +10,7 @@ describe('release helper', () => {
 
   beforeEach(async () => {
     await fs.ensureDir(TEST_DIR);
-    execSync('git init', { cwd: TEST_DIR, stdio: 'ignore' });
+    execSync('git init -b main', { cwd: TEST_DIR, stdio: 'ignore' });
     execSync('git config user.name "Test User"', { cwd: TEST_DIR, stdio: 'ignore' });
     execSync('git config user.email "test@example.com"', { cwd: TEST_DIR, stdio: 'ignore' });
     await fs.writeJson(path.join(TEST_DIR, 'package.json'), {
