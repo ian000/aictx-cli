@@ -52,7 +52,7 @@
     "execa": "^8.0.1",
     "fs-extra": "^11.3.4",
     "globby": "^16.2.0",
-    "graphify-go": "^1.1.1",
+    "graphify-go": "^1.1.2",
     "gray-matter": "^4.0.3",
     "ollama": "^0.6.3",
     "picocolors": "^1.1.1",
