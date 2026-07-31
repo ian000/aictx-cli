@@ -70,4 +70,18 @@ describe('init bootstrap artifacts', () => {
     expect(result.importedArtifacts[0]?.type).toBe('directory');
     expect(await fs.pathExists(path.join(TEST_DIR, 'aictx-docs/product/prd-assets/flow.png'))).toBe(true);
   });
+
+  it('preserves existing imported targets instead of overwriting them', async () => {
+    await fs.writeFile(path.join(TEST_DIR, 'aictx-docs/product/prd.md'), '# Existing PRD\n');
+
+    const result = await scaffoldBootstrapArtifacts({
+      cwd: TEST_DIR,
+      projectName: 'demo-app',
+      fromPrd: path.join(SOURCE_DIR, 'prd.md')
+    });
+
+    expect(result.importedArtifacts[0]?.status).toBe('preserved');
+    expect(result.warnings[0]).toContain('保留现有 PRD 文档');
+    expect(await fs.readFile(path.join(TEST_DIR, 'aictx-docs/product/prd.md'), 'utf-8')).toContain('# Existing PRD');
+  });
 });

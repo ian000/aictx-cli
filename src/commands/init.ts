@@ -227,6 +227,10 @@ _运行 \`aictx index\` 自动生成路由表_
         archSummary
       });
 
+      for (const warning of bootstrapArtifacts.warnings) {
+        console.log(pc.yellow(`⚠ ${warning}`));
+      }
+
       // Copy built-in Trae skills if Trae is selected
       if (ides.includes('trae')) {
         const __dirname = path.dirname(fileURLToPath(import.meta.url));

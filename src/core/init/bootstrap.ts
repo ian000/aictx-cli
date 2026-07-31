@@ -15,11 +15,13 @@ export interface ImportedArtifact {
   targetPath: string;
   targetRelativePath: string;
   type: 'file' | 'directory';
+  status: 'copied' | 'preserved';
 }
 
 export interface BootstrapArtifacts {
   importedArtifacts: ImportedArtifact[];
   generatedArtifacts: string[];
+  warnings: string[];
 }
 
 function normalizeSourcePath(cwd: string, inputPath: string): string {
@@ -35,7 +37,7 @@ async function importPath(
   kind: ImportedArtifact['kind'],
   sourceInput: string,
   targetDir: string
-): Promise<ImportedArtifact> {
+): Promise<{ artifact: ImportedArtifact; warning?: string }> {
   const sourcePath = normalizeSourcePath(cwd, sourceInput);
   const exists = await fs.pathExists(sourcePath);
   if (!exists) {
@@ -45,26 +47,49 @@ async function importPath(
   const stat = await fs.stat(sourcePath);
   const baseName = path.basename(sourcePath);
   const targetPath = path.join(targetDir, baseName);
+  const targetExists = await fs.pathExists(targetPath);
+
+  if (targetExists) {
+    const targetRelativePath = toPosixRelative(cwd, targetPath);
+    const warning = `保留现有 ${kind === 'prd' ? 'PRD' : '技术架构'} 文档，未覆盖已存在目标: ${targetRelativePath}`;
+    return {
+      artifact: {
+        kind,
+        sourcePath,
+        targetPath,
+        targetRelativePath,
+        type: stat.isDirectory() ? 'directory' : 'file',
+        status: 'preserved'
+      },
+      warning
+    };
+  }
 
   if (stat.isDirectory()) {
     await fs.copy(sourcePath, targetPath, { overwrite: true });
     return {
-      kind,
-      sourcePath,
-      targetPath,
-      targetRelativePath: toPosixRelative(cwd, targetPath),
-      type: 'directory'
+      artifact: {
+        kind,
+        sourcePath,
+        targetPath,
+        targetRelativePath: toPosixRelative(cwd, targetPath),
+        type: 'directory',
+        status: 'copied'
+      }
     };
   }
 
   await fs.ensureDir(targetDir);
   await fs.copyFile(sourcePath, targetPath);
   return {
-    kind,
-    sourcePath,
-    targetPath,
-    targetRelativePath: toPosixRelative(cwd, targetPath),
-    type: 'file'
+    artifact: {
+      kind,
+      sourcePath,
+      targetPath,
+      targetRelativePath: toPosixRelative(cwd, targetPath),
+      type: 'file',
+      status: 'copied'
+    }
   };
 }
 
@@ -95,7 +120,10 @@ function createBootstrapTodo(
   hasArchitectureInput: boolean
 ): string {
   const importedLines = importedArtifacts.length > 0
-    ? importedArtifacts.map((artifact) => `- \`${artifact.targetRelativePath}\` <= \`${artifact.sourcePath}\``).join('\n')
+    ? importedArtifacts.map((artifact) => {
+      const suffix = artifact.status === 'preserved' ? ' (existing target preserved)' : '';
+      return `- \`${artifact.targetRelativePath}\` <= \`${artifact.sourcePath}\`${suffix}`;
+    }).join('\n')
     : '- 当前未导入外部文档，使用空白脚手架初始化。';
 
   const generatedLines = generatedArtifacts.length > 0
@@ -141,13 +169,18 @@ export async function scaffoldBootstrapArtifacts(options: InitBootstrapOptions):
   const projectDir = path.join(docBase, 'project');
   const importedArtifacts: ImportedArtifact[] = [];
   const generatedArtifacts: string[] = [];
+  const warnings: string[] = [];
 
   if (options.fromPrd) {
-    importedArtifacts.push(await importPath(options.cwd, 'prd', options.fromPrd, productDir));
+    const result = await importPath(options.cwd, 'prd', options.fromPrd, productDir);
+    importedArtifacts.push(result.artifact);
+    if (result.warning) warnings.push(result.warning);
   }
 
   if (options.fromArch) {
-    importedArtifacts.push(await importPath(options.cwd, 'architecture', options.fromArch, architectureDir));
+    const result = await importPath(options.cwd, 'architecture', options.fromArch, architectureDir);
+    importedArtifacts.push(result.artifact);
+    if (result.warning) warnings.push(result.warning);
   }
 
   if (options.archSummary && options.archSummary.trim().length > 0) {
@@ -168,5 +201,5 @@ export async function scaffoldBootstrapArtifacts(options: InitBootstrapOptions):
     generatedArtifacts.push(toPosixRelative(options.cwd, todoPath));
   }
 
-  return { importedArtifacts, generatedArtifacts };
+  return { importedArtifacts, generatedArtifacts, warnings };
 }
