@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   ClaudeAdapter,
+  CodexAdapter,
   CursorAdapter,
   TraeAdapter,
   WindsurfAdapter
@@ -46,6 +47,37 @@ describe('AI tool rule adapters', () => {
     const cursorRule = await fs.readFile(path.join(testDir, '.cursor/rules/aictx-common-global.mdc'), 'utf-8');
     expect(cursorRule).toContain('globs: ["**/*"]');
     expect(cursorRule).toContain('alwaysApply: true');
+  });
+
+  it('delivers the communication rule to every supported AI tool', async () => {
+    const communicationResult: AssembleResult = {
+      rules: [{
+        filename: 'common-user-communication.md',
+        sourcePath: 'common-user-communication.md',
+        content: '# 用户沟通与交付标准\n\n第一段直接给出结果。\n',
+        tags: ['common', 'global'],
+        tokens: 12
+      }],
+      stats: { totalScanned: 1, matchedRules: 1, ignoredRules: 0, matchedTokens: 12, ignoredTokens: 0 }
+    };
+
+    await new CodexAdapter().inject(testDir, communicationResult);
+    await new ClaudeAdapter().inject(testDir, communicationResult);
+    await new CursorAdapter().inject(testDir, communicationResult);
+    await new WindsurfAdapter().inject(testDir, communicationResult);
+    await new TraeAdapter().inject(testDir, communicationResult);
+
+    const targets = [
+      path.join(testDir, '.agents/workflows/aictx-common-user-communication.md'),
+      path.join(testDir, '.claude/rules/aictx-common-user-communication.md'),
+      path.join(testDir, '.cursor/rules/aictx-common-user-communication.mdc'),
+      path.join(testDir, '.windsurf/rules/aictx-common-user-communication.md'),
+      path.join(testDir, '.trae/rules/aictx-common-user-communication.md')
+    ];
+
+    for (const target of targets) {
+      expect(await fs.readFile(target, 'utf-8')).toContain('第一段直接给出结果');
+    }
   });
 
   it('doctor reports missing and modified files for every configured tool', async () => {

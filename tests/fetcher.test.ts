@@ -56,4 +56,20 @@ describe('rule fetcher', () => {
     expect(content).toContain('aictx route "<用户问题>"');
     expect(content).toContain('aictx index');
   });
+
+  it('ships concise communication and conditional sub-agent rules', async () => {
+    await fetchRules('builtin', cacheDir);
+
+    const communication = await fs.readFile(path.join(cacheDir, 'common-user-communication.md'), 'utf-8');
+    const orchestration = await fs.readFile(path.join(cacheDir, 'common-agent-orchestration.md'), 'utf-8');
+    const global = await fs.readFile(path.join(cacheDir, 'common-global.md'), 'utf-8');
+
+    expect(communication).toContain('第一段直接给出结果');
+    expect(communication).toContain('简单任务使用 1-3 句话');
+    expect(communication).toContain('只有实际验证通过后才能声称完成或通过');
+    expect(orchestration).toContain('分工收益高于协调成本');
+    expect(orchestration).toContain('任务简单、范围很小');
+    expect(orchestration).toContain('主智能体负责整合结果');
+    expect(global).toContain('使用用户当前使用的语言');
+  });
 });

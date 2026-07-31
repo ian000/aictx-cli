@@ -203,6 +203,12 @@ Every package release should update this section before publishing to npm.
 
 No changes yet.
 
+### v1.6.4 - 2026-08-01
+
+- Added a built-in user communication rule that leads with outcomes, removes unnecessary process narration, and reports only verified results.
+- Added conditional sub-agent orchestration rules so work is delegated only when the host supports it and parallelism has a clear benefit, with final review owned by the primary agent.
+- Updated the global communication language rule to follow the user's current language, while honoring an explicitly requested language.
+
 ### v1.6.3 - 2026-08-01
 
 - Added a built-in common graph freshness rule: when graph data is stale, agents must regenerate the project graph before making architecture or codebase-relationship judgments.
