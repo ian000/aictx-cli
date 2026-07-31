@@ -87,6 +87,15 @@ aictx init
 ```
 This will generate `aictx.json`, scaffold `aictx-docs/`, and inject the selected IDE workspace rules.
 
+For an existing JavaScript, TypeScript, Python, or Go project, run Brownfield onboarding directly. Codex is the default; use `--ide` to select one or more tools:
+```bash
+aictx init --onboard
+aictx init --onboard --yes --ide claude
+aictx init --onboard --yes --ide codex,claude
+```
+
+Generated files follow each tool's native conventions, including `AGENTS.md` + `.agents/*` for Codex, `CLAUDE.md` + `.claude/*` for Claude Code, and the corresponding `.cursor`, `.windsurf`, or `.trae` rule directories.
+
 If you already have a PRD and architecture document, initialize directly from them:
 ```bash
 aictx init --from-prd ./docs/prd.md --from-arch ./docs/tech-stack.md

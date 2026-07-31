@@ -2,25 +2,31 @@ import { defineCommand } from 'cac';
 import fs from 'fs-extra';
 import path from 'path';
 import pc from 'picocolors';
-import { fileURLToPath } from 'url';
 import { cliUX } from '../utils/cli-ux.js';
-import { ensureCodexWorkspace } from '../core/codex/index.js';
 import { scaffoldBootstrapArtifacts } from '../core/init/bootstrap.js';
 import { runCurrentAictxCommand } from '../utils/self-cli.js';
+import {
+  DEFAULT_IDES,
+  IDE_OPTIONS,
+  ensureIdeWorkspaces,
+  parseIdeOption,
+  readConfiguredIdes,
+  type SupportedIde
+} from '../core/ide/index.js';
 
 export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
   cli.command('init', '初始化 aictx 配置')
     .option('--onboard', '直接进入存量项目逆向接管流程')
     .option('-y, --yes', '跳过所有确认提示')
     .option('--repo <url>', '指定 Meta-Repo 地址 (跳过交互)')
-    .option('--ide <ide>', '指定 IDE (如 codex/trae, 跳过交互)')
+    .option('--ide <ide>', '指定 AI 工具，多个值用逗号分隔 (如 codex,claude)')
     .option('--from-prd <path>', '导入现有 PRD / 产品文档文件或目录')
     .option('--from-arch <path>', '导入现有技术架构 / 技术栈文档文件或目录')
     .option('--arch <text>', '直接提供技术架构摘要，生成架构种子文档')
     .option('--no-npm-publish-workflow', '不生成 npm Trusted Publisher / GitHub Actions OIDC 发布模板')
     .action(async (options) => {
       cliUX.intro('初始化 Context as Code 基础设施');
-      const defaultIdes = ['codex'];
+      const cwd = process.cwd();
 
       let projectType = 'greenfield';
       
@@ -39,33 +45,27 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
         ) as string;
       }
 
+      const configuredIdes = await readConfiguredIdes(cwd);
+      let ides: SupportedIde[];
+      if (options.ide !== undefined) {
+        ides = parseIdeOption(options.ide);
+      } else if (options.yes) {
+        ides = configuredIdes ?? DEFAULT_IDES;
+      } else {
+        ides = await cliUX.askMultiSelect(
+          '请选择当前使用的 AI 编程工具 (多选)',
+          IDE_OPTIONS,
+          true,
+          configuredIdes ?? DEFAULT_IDES
+        ) as SupportedIde[];
+      }
+
       if (projectType === 'brownfield') {
         cliUX.outro('🚀 即将启动 aictx onboard 逆向工程流程...');
         const { OnboardEngine } = await import('../core/onboard/index.js');
-        const onboard = new OnboardEngine({ cwd: process.cwd(), yes: options.yes });
+        const onboard = new OnboardEngine({ cwd, yes: options.yes, ides });
         await onboard.run();
         return;
-      }
-
-      // 2. 询问 IDE 类型 (仅新项目)
-      let ides: string[] = [];
-      if (options.ide) {
-        ides = [options.ide];
-      } else if (options.yes) {
-        ides = defaultIdes;
-      } else {
-        ides = await cliUX.askMultiSelect(
-          '请选择当前团队使用的 AI IDE 或编程助手 (多选)',
-          [
-            { value: 'codex', label: 'Codex', hint: 'OpenAI Codex (AGENTS.md + .agents/*) [默认]' },
-            { value: 'trae', label: 'Trae', hint: '字节跳动 AI IDE (.trae/rules/)' },
-            { value: 'cursor', label: 'Cursor', hint: 'Cursor (.cursor/rules/)' },
-            { value: 'windsurf', label: 'Windsurf', hint: 'Codeium Windsurf' },
-            { value: 'claude', label: 'Claude Code', hint: 'Anthropic CLI (.clauderc)' },
-          ],
-          true,
-          defaultIdes
-        ) as string[];
       }
 
       // 2. 询问 Meta-Repo 地址
@@ -147,18 +147,18 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       }
 
       // 3. 生成配置文件
-      const configPath = path.resolve(process.cwd(), 'aictx.json');
-      const ignorePath = path.resolve(process.cwd(), '.aiignore');
+      const configPath = path.resolve(cwd, 'aictx.json');
+      const ignorePath = path.resolve(cwd, '.aiignore');
       
       const s = cliUX.createSpinner();
       s.start('正在生成项目配置...');
 
-      const projectName = path.basename(process.cwd());
+      const projectName = path.basename(cwd);
       const defaultConfig = {
         $schema: "https://unpkg.com/aictx/schema.json",
         version: "1.0",
         repository: repoUrl,
-        ides: ides.length > 0 ? ides : defaultIdes,
+        ides,
         tags: ["backend", "frontend", "common", projectName],
         bootstrap: {
           mode: fromPrd || fromArch || archSummary ? 'from-docs' : 'blank',
@@ -177,7 +177,7 @@ export const initCommand = (cli: ReturnType<typeof defineCommand>) => {
       }
 
       // Scaffold standard documents directory structure and MOC templates
-      const docBase = path.resolve(process.cwd(), 'aictx-docs');
+      const docBase = path.resolve(cwd, 'aictx-docs');
       const dirsToCreate = [
         path.join(docBase, 'product'),
         path.join(docBase, 'architecture'),
@@ -221,7 +221,7 @@ _运行 \`aictx index\` 自动生成路由表_
       }
 
       const bootstrapArtifacts = await scaffoldBootstrapArtifacts({
-        cwd: process.cwd(),
+        cwd,
         projectName,
         fromPrd,
         fromArch,
@@ -233,22 +233,7 @@ _运行 \`aictx index\` 自动生成路由表_
         console.log(pc.yellow(`⚠ ${warning}`));
       }
 
-      // Copy built-in Trae skills if Trae is selected
-      if (ides.includes('trae')) {
-        const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        // __dirname is usually 'dist' (when bundled) or 'src/commands' (in dev).
-        const isDist = __dirname.endsWith('dist');
-        const templatesDir = path.resolve(__dirname, isDist ? 'templates/.trae/skills' : '../templates/.trae/skills');
-        const targetSkillsDir = path.resolve(process.cwd(), '.trae/skills');
-        
-        if (fs.existsSync(templatesDir)) {
-          await fs.copy(templatesDir, targetSkillsDir, { overwrite: false });
-        }
-      }
-
-      if (ides.includes('codex')) {
-        await ensureCodexWorkspace(process.cwd());
-      }
+      await ensureIdeWorkspaces(cwd, ides);
 
       s.stop('配置生成成功！');
 
@@ -264,7 +249,7 @@ _运行 \`aictx index\` 自动生成路由表_
       
       // 自动执行 aictx sync
       try {
-        await runCurrentAictxCommand(['sync'], process.cwd());
+        await runCurrentAictxCommand(['sync'], cwd);
       } catch (e) {
         console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e as Error).message}`));
       }

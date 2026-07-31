@@ -3,6 +3,8 @@ import pc from 'picocolors';
 import path from 'path';
 import { ConfigParser } from '../config/index.js';
 import { diagnoseDrift } from '../core/doctor/index.js';
+import { assembleRules } from '../core/assembler/index.js';
+import fs from 'fs-extra';
 
 export const doctorCommand = (cli: any) => {
   cli.command('doctor', '诊断本地规则与 Token 健康度')
@@ -14,8 +16,11 @@ export const doctorCommand = (cli: any) => {
         
         const cwd = process.cwd();
         const cacheDir = path.join(cwd, '.aictx-cache');
-        
-        const issues = await diagnoseDrift(cwd, cacheDir, config.ides);
+        if (!(await fs.pathExists(cacheDir))) {
+          throw new Error('未找到缓存目录，请先执行 `aictx sync`。');
+        }
+        const assembled = await assembleRules(cacheDir, config.tags);
+        const issues = await diagnoseDrift(cwd, assembled, config.ides);
         
         if (issues.length === 0) {
           consola.success(pc.green('诊断完成：未发现任何规则漂移或篡改。'));
@@ -33,6 +38,7 @@ export const doctorCommand = (cli: any) => {
         
       } catch (error: any) {
         consola.error(pc.red(`诊断失败: ${error.message}`));
+        process.exitCode = 1;
       }
     });
 };

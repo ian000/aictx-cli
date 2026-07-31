@@ -46,9 +46,10 @@ cli.version(pkg.version);
 (async () => {
   await initI18n();
   try {
-    cli.parse();
+    cli.parse(process.argv, { run: false });
+    await cli.runMatchedCommand();
   } catch (error: any) {
     consola.error(error.message);
-    process.exit(1);
+    process.exitCode = 1;
   }
 })();

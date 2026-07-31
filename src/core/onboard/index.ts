@@ -4,18 +4,16 @@ import path from 'path';
 import pc from 'picocolors';
 import { globby } from 'globby';
 import { cliUX } from '../../utils/cli-ux.js';
-import { fileURLToPath } from 'url';
-import { ConfigParser } from '../../config/index.js';
-import { fetchRules } from '../fetcher/index.js';
-import { assembleRules } from '../assembler/index.js';
-import { TraeAdapter, CursorAdapter, WindsurfAdapter, ClaudeAdapter } from '../injector/index.js';
 import { analyzeWithGraphify } from '../../utils/graphify.js';
-import { ensureCodexWorkspace } from '../codex/index.js';
 import { runCurrentAictxCommand } from '../../utils/self-cli.js';
+import { ensureIdeWorkspaces, type SupportedIde } from '../ide/index.js';
 
 export interface OnboardOptions {
   cwd: string;
   yes?: boolean;
+  ides: SupportedIde[];
+  analyze?: typeof analyzeWithGraphify;
+  runCommand?: typeof runCurrentAictxCommand;
 }
 
 export interface StaticInfo {
@@ -41,6 +39,12 @@ export class OnboardEngine {
     const staticInfo = await this.sniffStaticInfo();
     s.stop(`探测完成: 发现 ${pc.cyan(staticInfo.dependencies.length)} 个核心依赖, ${pc.cyan(staticInfo.fileCount)} 个业务文件`);
 
+    if (staticInfo.fileCount === 0) {
+      throw new Error(
+        '未找到 Graphify-Go 支持的源码。当前自动接管支持 JavaScript、TypeScript、Python 和 Go；请确认源码已检出，或等待对应语言解析器后再运行 `aictx init --onboard`。'
+      );
+    }
+
     // Step 2: 询问用户是否执行逆向接管
     let confirm = true;
     if (!this.options.yes) {
@@ -53,12 +57,10 @@ export class OnboardEngine {
     }
 
     consola.info('准备启动基于 AST 拓扑图谱的解析流程...');
-    await this.executeASTExtraction(staticInfo);
+    await this.executeASTExtraction();
   }
 
-  private async executeASTExtraction(staticInfo: StaticInfo) {
-    const s = cliUX.createSpinner();
-    
+  private async executeASTExtraction() {
     // 我们不再强制全局 pip install graphifyy
     // 因为 aictx graph 内部已经实现了黑盒代理调用
     
@@ -70,7 +72,8 @@ export class OnboardEngine {
     const startTime = Date.now();
     try {
       consola.start('正在启动 Graphify-Go 纯本地引擎进行代码逆向...');
-      await analyzeWithGraphify(
+      const analyze = this.options.analyze ?? analyzeWithGraphify;
+      await analyze(
         this.options.cwd,
         path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out'),
         { cwd: this.options.cwd, stdio: 'inherit' }
@@ -78,8 +81,7 @@ export class OnboardEngine {
       consola.success('Graphify-Go 逆向分析完成！');
     } catch (e: any) {
       sAst.stop('提取失败');
-      consola.error('Graphify AST 图谱生成失败', e.message);
-      return;
+      throw new Error(`Graphify AST 图谱生成失败: ${e.message}`);
     }
 
     const graphJsonPath = path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out/graph.json');
@@ -87,8 +89,7 @@ export class OnboardEngine {
     
     if (!fs.existsSync(graphJsonPath) || !fs.existsSync(reportPath)) {
       sAst.stop('文件未生成');
-      consola.error(`未能找到生成的知识图谱或审查报告：${graphJsonPath}`);
-      return;
+      throw new Error(`Graphify 执行结束但产物不完整，请检查 ${graphJsonPath} 和 ${reportPath}`);
     }
 
     const graphData = await fs.readJson(graphJsonPath);
@@ -143,83 +144,12 @@ ${rawReport}
     await fs.ensureDir(path.resolve(this.options.cwd, 'aictx-docs/architecture'));
     await fs.writeFile(path.resolve(this.options.cwd, 'aictx-docs/architecture/system-graph.md'), aictxMarkdown);
     
-    const onboardIdes = this.getDefaultIdes();
+    const onboardIdes = this.options.ides;
 
     // 4. 生成 IDE Skills 供助手丝滑调用 Graphify
     sTrans.message(`正在为 ${onboardIdes.join(', ')} 安装内置技能 (Skills)...`);
     
-    // Copy built-in templates first
-    const __filenamePath = fileURLToPath(import.meta.url);
-    const __dirnamePath = path.dirname(__filenamePath);
-    
-    // Note: 兼容开发环境和 tsup 打包后的环境
-    // 由于 templates 已经移动到 src/templates，并且构建时被 copy 到了 dist/templates
-    // 开发环境: __dirnamePath 是 src/core/onboard -> templates 在 ../../templates
-    // 打包环境: __dirnamePath 是 dist -> templates 在 ./templates
-    const isDist = __dirnamePath.endsWith('dist');
-    const templatesDir = path.resolve(__dirnamePath, isDist ? 'templates/.trae/skills' : '../../templates/.trae/skills');
-    const targetTraeDir = path.resolve(this.options.cwd, '.trae/skills');
-    
-    if (fs.existsSync(templatesDir) && onboardIdes.includes('trae')) {
-      await fs.copy(templatesDir, targetTraeDir, { overwrite: false });
-    } else {
-      if (!fs.existsSync(templatesDir)) {
-        consola.warn(`未找到模板目录: ${templatesDir} (__dirnamePath: ${__dirnamePath})`);
-      }
-    }
-
-    if (onboardIdes.includes('codex')) {
-      await ensureCodexWorkspace(this.options.cwd);
-    }
-
-    const skillDir = path.resolve(this.options.cwd, '.trae/skills/aictx-graphify');
-    await fs.ensureDir(skillDir);
-const skillContent = `---
-name: "aictx-graphify"
-description: "Inspect the local Graphify AST knowledge graph artifacts. Invoke when the user asks about project architecture, dependencies, codebase structure, code connections, or module relationships."
----
-
-# Graphify Knowledge Graph Assistant
-
-This project has been onboarded with \`aictx\` and has a local AST knowledge graph generated by \`graphify-go\` at \`aictx-docs/architecture/graphify-out/graph.json\`.
-
-## When to Use This Skill
-- When you need to understand the relationships between different modules, classes, or functions.
-- When answering architecture or codebase questions.
-- To find "God Nodes" (highly connected components) or "Surprising Connections".
-
-## How to Use
-Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
-
-1. **Rebuild the Graph Artifacts:**
-   \`\`\`bash
-   aictx graph analyze --dir . --out aictx-docs/architecture/graphify-out
-   \`\`\`
-
-2. **Print a Fresh Markdown Summary to stdout:**
-   \`\`\`bash
-   aictx graph print --dir . --format markdown
-   \`\`\`
-
-3. **Print the Raw JSON Graph to stdout:**
-   \`\`\`bash
-   aictx graph print --dir . --format json
-   \`\`\`
-
-4. **Read the Report:**
-   Read \`aictx-docs/architecture/system-graph.md\` or \`aictx-docs/architecture/graphify-out/system-graph.md\` for god nodes and community structure before searching raw files.
-
-5. **Inspect Specific Symbols:**
-   Search for symbol names inside \`aictx-docs/architecture/graphify-out/graph.json\` before broad raw-file search.
-`;
-    if (onboardIdes.includes('trae')) {
-      await fs.writeFile(path.resolve(skillDir, 'SKILL.md'), skillContent);
-    }
-    if (onboardIdes.includes('codex')) {
-      const codexSkillDir = path.resolve(this.options.cwd, '.agents/skills/aictx-graphify');
-      await fs.ensureDir(codexSkillDir);
-      await fs.writeFile(path.resolve(codexSkillDir, 'SKILL.md'), skillContent);
-    }
+    await ensureIdeWorkspaces(this.options.cwd, onboardIdes);
 
     sTrans.stop('知识库与 IDE Skill 转换生成完毕！');
 
@@ -236,16 +166,20 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
         overrides: {}
       };
       await fs.writeJson(configPath, defaultConfig, { spaces: 2 });
+    } else {
+      const currentConfig = await fs.readJson(configPath);
+      await fs.writeJson(configPath, { ...currentConfig, ides: onboardIdes }, { spaces: 2 });
     }
     
     // 强制执行一次 Sync (代替手动拷贝内置规则)
     sTrans.start('正在自动触发 aictx sync 拉取并释放规则...');
     try {
-      await runCurrentAictxCommand(['sync'], this.options.cwd);
+      const runCommand = this.options.runCommand ?? runCurrentAictxCommand;
+      await runCommand(['sync'], this.options.cwd);
       sTrans.stop('自动 aictx sync 规则下发完成！');
     } catch (e) {
       sTrans.stop('自动 aictx sync 触发失败');
-      console.error(pc.red(`自动 aictx sync 失败，请手动执行 \`aictx sync\`: ${(e as Error).message}`));
+      throw new Error(`图谱已生成，但自动 aictx sync 失败: ${(e as Error).message}。请修复后运行 \`aictx sync\``);
     }
 
     console.log('\n======================================================================');
@@ -257,6 +191,9 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     if (onboardIdes.includes('codex')) {
       console.log(`✅ ${pc.cyan('.agents/skills/aictx-graphify/SKILL.md')} (已为 Codex 自动挂载 Graphify 技能)`);
       console.log(`✅ ${pc.cyan('AGENTS.md')} (已为 Codex 自动生成项目入口指令)`);
+    }
+    if (onboardIdes.includes('claude')) {
+      console.log(`✅ ${pc.cyan('CLAUDE.md')} + ${pc.cyan('.claude/*')} (已为 Claude Code 初始化)`);
     }
     console.log(`全程零 Token 消耗、零云端 API 调用、绝对保护代码隐私！`);
     
@@ -301,73 +238,36 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
     console.log('\n======================================================================\n');
   }
 
-  /** 
-   * 由于 pip 安装的 graphify 暂时仅是一个 Skill Wrapper (只支持 install/query)
-   * 这里的备用函数用于模拟 `graphify .` 生成的数据结构，保证产品全链路可测试
-   */
-  private async fallbackMockGraphifyOutput() {
-    await fs.ensureDir(path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out'));
-      
-    const mockGraphJson = {
-      nodes: [
-        { id: 'UserController', type: 'class', label: 'UserController', degree: 5, community: 1 },
-        { id: 'AuthService', type: 'class', label: 'AuthService', degree: 8, community: 1 },
-        { id: 'OrderRepository', type: 'class', label: 'OrderRepository', degree: 4, community: 2 },
-        { id: 'PaymentGateway', type: 'class', label: 'PaymentGateway', degree: 2, community: 2 },
-        { id: 'DatabaseConnection', type: 'class', label: 'DatabaseConnection', degree: 15, community: 0 }
-      ],
-      links: [
-        { source: 'UserController', target: 'AuthService', label: 'calls' },
-        { source: 'AuthService', target: 'DatabaseConnection', label: 'calls' }
-      ]
-    };
-    
-    const mockReport = `## Community 0
-- 核心基础设施层，处理底层连接与通用工具。
-## Community 1
-- 用户与认证域，处理登录鉴权与用户资料。
-## Community 2
-- 交易域，处理订单状态机与支付网关对接。
-
-**Surprising connections**:
-- \`UserController\` 存在跨域直接调用 \`PaymentGateway\` 的隐患，建议重构通过 \`OrderService\` 代理。`;
-
-    await fs.writeJson(path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out/graph.json'), mockGraphJson);
-    await fs.writeFile(path.resolve(this.options.cwd, 'aictx-docs/architecture/graphify-out/GRAPH_REPORT.md'), mockReport);
-  }
-
-  /** 读取文件头部 N 行以防 Token 超载 */
-  private async readHeadLines(filePath: string, lineCount: number): Promise<string> {
-    try {
-      const content = await fs.readFile(filePath, 'utf-8');
-      const lines = content.split('\n');
-      return lines.slice(0, lineCount).join('\n');
-    } catch {
-      return '';
-    }
-  }
-
-  private getDefaultIdes(): string[] {
-    return ['codex'];
-  }
-
   private async sniffStaticInfo(): Promise<StaticInfo> {
     const pkgPath = path.resolve(this.options.cwd, 'package.json');
     let dependencies: string[] = [];
     
     if (fs.existsSync(pkgPath)) {
-      const pkg = await fs.readJson(pkgPath);
-      const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-      // 提取核心框架特征
-      const coreKeywords = ['react', 'vue', 'next', 'nuxt', 'express', 'nestjs', 'prisma', 'typeorm', 'tailwindcss'];
-      dependencies = Object.keys(allDeps).filter(dep => 
-        coreKeywords.some(keyword => dep.includes(keyword))
-      );
+      try {
+        const pkg = await fs.readJson(pkgPath);
+        const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+        const coreKeywords = ['react', 'vue', 'next', 'nuxt', 'express', 'nestjs', 'prisma', 'typeorm', 'tailwindcss'];
+        dependencies = Object.keys(allDeps).filter(dep =>
+          coreKeywords.some(keyword => dep.includes(keyword))
+        );
+      } catch (error) {
+        consola.warn(`package.json 无法解析，将跳过依赖识别并继续分析源码: ${(error as Error).message}`);
+      }
     }
 
-    const files = await globby(['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}', 'lib/**/*.{ts,tsx,js,jsx}'], {
+    const files = await globby(['**/*.{js,jsx,ts,tsx,py,go}'], {
       cwd: this.options.cwd,
-      ignore: ['node_modules', '**/*.test.*', '**/*.spec.*']
+      gitignore: true,
+      ignore: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/build/**',
+        '**/vendor/**',
+        '**/aictx-docs/architecture/graphify-out/**',
+        '**/*.test.*',
+        '**/*.spec.*'
+      ]
     });
 
     const hasPrisma = fs.existsSync(path.resolve(this.options.cwd, 'prisma/schema.prisma'));
@@ -379,36 +279,5 @@ Use the \`aictx graph\` CLI tool via the \`RunCommand\` tool:
       hasPrisma,
       hasDocker
     };
-  }
-
-  private executeTier2Fallback(staticInfo: any) {
-    console.log('\n======================================================================');
-    console.log(`${pc.yellow('⚠️ 未挂载本地模型，已为您降级为 Tier 2 (IDE 引导模式)')}`);
-    console.log('请复制以下 Prompt，粘贴到您的 Trae / Cursor / Claude Code 的聊天框中：\n');
-    console.log(pc.dim('----------------------------------------------------------------------'));
-    console.log(pc.green(`作为一名资深架构师，请帮我将当前项目逆向解构为 aictx 规范的 RAG 知识库。
-
-项目基础信息：
-- 核心技术栈：${staticInfo.dependencies.join(', ')}
-- 业务规模：约 ${staticInfo.fileCount} 个文件
-
-请执行以下任务：
-1. 深度阅读当前仓库的 src 目录，提取出全局的：
-   - 架构设计规范 (如文件命名、目录职责)
-   - API 响应/错误码枚举约束
-   - 核心数据库模型 (Schema) 与业务红线
-2. 将以上信息，拆分为 3~5 个独立的 Markdown 文件。
-3. 每个 Markdown 文件的开头，必须包含如下 YAML Frontmatter：
----
-tags: [aictx, onboard]
-aliases: [文档别名]
-entities: [涉及的核心实体]
----
-4. 将这些文件创建在项目根目录的 \`aictx-docs/\` 文件夹下，并按照 \`product/\`, \`architecture/\` 分类。`));
-    console.log(pc.dim('----------------------------------------------------------------------'));
-    console.log('\n当 IDE 为您生成完这些文档后，请在终端运行：');
-    console.log(pc.cyan('aictx index') + ' 以生成 MOC 双向路由表，完成接管。');
-    console.log('======================================================================\n');
-    cliUX.outro('Context as Code - 降级策略执行完毕');
   }
 }

@@ -10,7 +10,7 @@ export const infoCommand = (cli: any) => {
       console.log(`📊 ${pc.bold('团队渗透情况')}`);
       console.log(`   - 接入项目数:   ${pc.green('1')} (当前项目)`);
       console.log(`   - 核心规则版本: ${pc.cyan('v1.0.0 (Local)')}`);
-      console.log(`   - 支持 IDE 数:  ${pc.cyan('4')} (Trae, Cursor, Claude, Windsurf)\n`);
+      console.log(`   - 支持 AI 工具数: ${pc.cyan('5')} (Codex, Claude Code, Cursor, Windsurf, Trae)\n`);
 
       console.log(`🛡️ ${pc.bold('价值感知 (Value Perception)')}`);
       console.log(`   - 规则健康度:   ${pc.green('100%')} (Zero Drift)`);

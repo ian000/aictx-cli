@@ -6,10 +6,9 @@ import { diagnoseDrift } from '../src/core/doctor/index.js';
 
 describe('Codex integration', () => {
   const TEST_DIR = path.join(process.cwd(), '.test-codex-project');
-  const CACHE_DIR = path.join(TEST_DIR, '.aictx-cache');
 
   beforeEach(async () => {
-    await fs.ensureDir(CACHE_DIR);
+    await fs.ensureDir(TEST_DIR);
   });
 
   afterEach(async () => {
@@ -47,7 +46,6 @@ describe('Codex integration', () => {
   });
 
   it('doctor can detect Codex workflow drift', async () => {
-    await fs.writeFile(path.join(CACHE_DIR, 'common-global.md'), 'source rule\n', 'utf-8');
     await fs.ensureDir(path.join(TEST_DIR, '.agents', 'workflows'));
     await fs.writeFile(
       path.join(TEST_DIR, '.agents', 'workflows', 'aictx-common-global.md'),
@@ -55,11 +53,14 @@ describe('Codex integration', () => {
       'utf-8'
     );
 
-    const issues = await diagnoseDrift(TEST_DIR, CACHE_DIR, ['codex']);
+    const issues = await diagnoseDrift(TEST_DIR, {
+      rules: [{ filename: 'common-global.md', content: 'source rule\n', tags: ['common'], tokens: 2 }],
+      stats: { totalScanned: 1, matchedRules: 1, ignoredRules: 0, matchedTokens: 2, ignoredTokens: 0 }
+    }, ['codex']);
     expect(issues).toEqual([
       {
         ide: 'codex',
-        file: 'aictx-common-global.md',
+        file: path.join('.agents', 'workflows', 'aictx-common-global.md'),
         reason: 'modified'
       }
     ]);
