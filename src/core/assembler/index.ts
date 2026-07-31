@@ -8,6 +8,7 @@ import { consola } from 'consola';
 export interface AssembleResult {
   rules: {
     filename: string;
+    sourcePath: string;
     content: string;
     tokens: number;
     tags: string[];
@@ -19,6 +20,25 @@ export interface AssembleResult {
     matchedTokens: number;
     ignoredTokens: number;
   };
+}
+
+function normalizeRuleSourcePath(filePath: string, sourceDir: string): string {
+  return path.relative(sourceDir, filePath).split(path.sep).join('/');
+}
+
+function toSafeRuleFilename(sourcePath: string): string {
+  return sourcePath
+    .split(/[\\/]+/)
+    .filter(Boolean)
+    .join('__');
+}
+
+function parseTags(rawTags: unknown, sourcePath: string): string[] {
+  if (rawTags === undefined) return [];
+  if (!Array.isArray(rawTags) || rawTags.some((tag) => typeof tag !== 'string')) {
+    throw new Error(`规则 ${sourcePath} 的 tags 必须是字符串数组。`);
+  }
+  return rawTags;
 }
 
 export async function assembleRules(sourceDir: string, projectTags: string[]): Promise<AssembleResult> {
@@ -35,11 +55,13 @@ export async function assembleRules(sourceDir: string, projectTags: string[]): P
 
   const mdFiles = await glob('**/*.md', { cwd: sourceDir, absolute: true });
   result.stats.totalScanned = mdFiles.length;
+  const seenOutputNames = new Map<string, string>();
 
   for (const filePath of mdFiles) {
+    const sourcePath = normalizeRuleSourcePath(filePath, sourceDir);
     const rawContent = await fs.readFile(filePath, 'utf-8');
     const parsed = matter(rawContent);
-    const fileTags: string[] = parsed.data.tags || [];
+    const fileTags = parseTags(parsed.data.tags, sourcePath);
     const contentTokens = countTokens(rawContent);
 
     // 严格过滤机制：
@@ -50,8 +72,16 @@ export async function assembleRules(sourceDir: string, projectTags: string[]): P
       (projectTags.length === 0 || fileTags.some(tag => projectTags.includes(tag) || tag === 'common' || tag === 'global'));
 
     if (isMatched) {
+      const filename = toSafeRuleFilename(sourcePath);
+      const previousSource = seenOutputNames.get(filename);
+      if (previousSource) {
+        throw new Error(`规则输出文件名冲突: ${previousSource} 与 ${sourcePath} 都会生成 ${filename}`);
+      }
+      seenOutputNames.set(filename, sourcePath);
+
       result.rules.push({
-        filename: path.basename(filePath),
+        filename,
+        sourcePath,
         content: rawContent,
         tokens: contentTokens,
         tags: fileTags

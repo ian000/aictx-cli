@@ -4,6 +4,44 @@ import { consola } from 'consola';
 import { x } from 'tinyexec';
 import { fileURLToPath } from 'url';
 
+async function createStagingDir(cacheDir: string): Promise<string> {
+  await fs.ensureDir(path.dirname(cacheDir));
+  return fs.mkdtemp(path.join(path.dirname(cacheDir), `${path.basename(cacheDir)}.tmp-`));
+}
+
+async function replaceCache(cacheDir: string, stagingDir: string): Promise<void> {
+  const backupDir = `${cacheDir}.bak-${process.pid}-${Date.now()}`;
+  const hadCache = await fs.pathExists(cacheDir);
+
+  if (hadCache) {
+    await fs.move(cacheDir, backupDir, { overwrite: true });
+  }
+
+  try {
+    await fs.move(stagingDir, cacheDir, { overwrite: false });
+  } catch (error) {
+    if (hadCache && await fs.pathExists(backupDir) && !(await fs.pathExists(cacheDir))) {
+      await fs.move(backupDir, cacheDir, { overwrite: true });
+    }
+    throw error;
+  }
+
+  if (hadCache) {
+    await fs.remove(backupDir);
+  }
+}
+
+async function replaceCacheWithCopy(cacheDir: string, sourceDir: string): Promise<void> {
+  const stagingDir = await createStagingDir(cacheDir);
+  try {
+    await fs.copy(sourceDir, stagingDir, { overwrite: true });
+    await replaceCache(cacheDir, stagingDir);
+  } catch (error) {
+    await fs.remove(stagingDir);
+    throw error;
+  }
+}
+
 export async function fetchRules(repository: string | undefined, cacheDir: string): Promise<void> {
   if (!repository || repository.trim() === '' || repository === 'builtin') {
     // 采用内置模板 (Builtin fallback)
@@ -15,10 +53,7 @@ export async function fetchRules(repository: string | undefined, cacheDir: strin
     const templatesDir = path.resolve(__dirname, isDist ? 'templates/.trae/rules' : '../../templates/.trae/rules');
     
     if (fs.existsSync(templatesDir)) {
-      // Empty the cache dir first
-      await fs.emptyDir(cacheDir);
-      // Copy the builtin rules into cacheDir
-      await fs.copy(templatesDir, cacheDir, { overwrite: true });
+      await replaceCacheWithCopy(cacheDir, templatesDir);
     } else {
       throw new Error(`未找到内置规则模板目录: ${templatesDir}`);
     }
@@ -32,37 +67,28 @@ export async function fetchRules(repository: string | undefined, cacheDir: strin
       throw new Error(`本地仓库路径不存在: ${localPath}`);
     }
     consola.start(`正在从本地目录同步规则: ${localPath}`);
-    await fs.emptyDir(cacheDir);
-    await fs.copy(localPath, cacheDir);
+    await replaceCacheWithCopy(cacheDir, localPath);
     consola.success(`本地规则同步完成 -> ${cacheDir}`);
     return;
   }
 
   // 否则认为是 Git URL
   consola.start(`正在从远程 Meta-Repo 同步规则: ${repository}`);
-  
-  if (fs.existsSync(cacheDir)) {
-    // 尝试 git pull
-    try {
-      const { exitCode } = await x('git', ['pull'], { nodeOptions: { cwd: cacheDir } });
-      if (exitCode === 0) {
-        consola.success(`远程规则拉取更新成功 -> ${cacheDir}`);
-        return;
-      }
-    } catch (e) {
-      consola.warn(`增量拉取失败，尝试重新克隆...`);
+
+  const stagingDir = await createStagingDir(cacheDir);
+  try {
+    const { exitCode, stderr } = await x('git', ['clone', '--depth', '1', repository, stagingDir]);
+    if (exitCode !== 0) {
+      throw new Error(`Git Clone 失败: ${stderr}`);
     }
+
+    // 清理 .git 目录以防嵌套仓库问题
+    await fs.remove(path.join(stagingDir, '.git'));
+    await replaceCache(cacheDir, stagingDir);
+  } catch (error) {
+    await fs.remove(stagingDir);
+    throw error;
   }
 
-  // 如果不存在或 pull 失败，重新 clone
-  await fs.emptyDir(cacheDir);
-  const { exitCode, stderr } = await x('git', ['clone', '--depth', '1', repository, cacheDir]);
-  
-  if (exitCode !== 0) {
-    throw new Error(`Git Clone 失败: ${stderr}`);
-  }
-  
-  // 清理 .git 目录以防嵌套仓库问题
-  await fs.remove(path.join(cacheDir, '.git'));
   consola.success(`远程规则 Clone 成功 -> ${cacheDir}`);
 }

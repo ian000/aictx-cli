@@ -29,7 +29,11 @@ export const doctorCommand = (cli: any) => {
 
         consola.warn(pc.yellow(`发现 ${issues.length} 处本地规则漂移:\n`));
         issues.forEach((issue, index) => {
-          const status = issue.reason === 'missing' ? pc.bgRed(' 缺失 ') : pc.bgYellow(' 被篡改 ');
+          const status = issue.reason === 'missing'
+            ? pc.bgRed(' 缺失 ')
+            : issue.reason === 'stale'
+              ? pc.bgMagenta(' 已过期 ')
+              : pc.bgYellow(' 被篡改 ');
           console.log(`  ${index + 1}. [${pc.cyan(issue.ide)}] ${status} ${issue.file}`);
         });
 

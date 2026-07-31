@@ -14,7 +14,7 @@ import { parseIdeOption } from '../src/core/ide/index.js';
 describe('AI tool rule adapters', () => {
   const testDir = path.join(process.cwd(), '.test-ide-adapters');
   const result: AssembleResult = {
-    rules: [{ filename: 'common-global.md', content: '# Common\n', tags: ['common'], tokens: 3 }],
+    rules: [{ filename: 'common-global.md', sourcePath: 'common-global.md', content: '# Common\n', tags: ['common'], tokens: 3 }],
     stats: { totalScanned: 1, matchedRules: 1, ignoredRules: 0, matchedTokens: 3, ignoredTokens: 0 }
   };
 
@@ -58,5 +58,40 @@ describe('AI tool rule adapters', () => {
       { ide: 'cursor', file: path.join('.cursor', 'rules', 'aictx-common-global.mdc'), reason: 'missing' },
       { ide: 'windsurf', file: path.join('.windsurf', 'rules', 'aictx-common-global.md'), reason: 'missing' }
     ]);
+  });
+
+  it('removes stale aictx generated rules without touching user rules', async () => {
+    await fs.ensureDir(path.join(testDir, '.claude', 'rules'));
+    await fs.writeFile(path.join(testDir, '.claude', 'rules', 'aictx-old.md'), '# Old\n');
+    await fs.writeFile(path.join(testDir, '.claude', 'rules', 'custom.md'), '# Custom\n');
+
+    await new ClaudeAdapter().inject(testDir, result);
+
+    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'aictx-old.md'))).toBe(false);
+    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'custom.md'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'aictx-common-global.md'))).toBe(true);
+  });
+
+  it('doctor reports stale generated rules', async () => {
+    await new ClaudeAdapter().inject(testDir, result);
+    await fs.writeFile(path.join(testDir, '.claude', 'rules', 'aictx-old.md'), '# Old\n');
+
+    const issues = await diagnoseDrift(testDir, result, ['claude']);
+
+    expect(issues).toEqual([
+      { ide: 'claude', file: path.join('.claude', 'rules', 'aictx-old.md'), reason: 'stale' }
+    ]);
+  });
+
+  it('cleans stale generated rules when no rules match', async () => {
+    await fs.ensureDir(path.join(testDir, '.claude', 'rules'));
+    await fs.writeFile(path.join(testDir, '.claude', 'rules', 'aictx-old.md'), '# Old\n');
+
+    await new ClaudeAdapter().inject(testDir, {
+      rules: [],
+      stats: { totalScanned: 1, matchedRules: 0, ignoredRules: 1, matchedTokens: 0, ignoredTokens: 3 }
+    });
+
+    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'aictx-old.md'))).toBe(false);
   });
 });

@@ -21,6 +21,7 @@ describe('Codex integration', () => {
       rules: [
         {
           filename: 'common-global.md',
+          sourcePath: 'common-global.md',
           content: '1. 请全程与用中文沟通\n',
           tags: ['common'],
           tokens: 10
@@ -54,7 +55,7 @@ describe('Codex integration', () => {
     );
 
     const issues = await diagnoseDrift(TEST_DIR, {
-      rules: [{ filename: 'common-global.md', content: 'source rule\n', tags: ['common'], tokens: 2 }],
+      rules: [{ filename: 'common-global.md', sourcePath: 'common-global.md', content: 'source rule\n', tags: ['common'], tokens: 2 }],
       stats: { totalScanned: 1, matchedRules: 1, ignoredRules: 0, matchedTokens: 2, ignoredTokens: 0 }
     }, ['codex']);
     expect(issues).toEqual([

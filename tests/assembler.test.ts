@@ -80,6 +80,7 @@ This rule has no tags and should be ignored.
     const frontendRule = result.rules.find(r => r.filename === 'rule-frontend.md');
     
     expect(frontendRule).toBeDefined();
+    expect(frontendRule?.sourcePath).toBe('rule-frontend.md');
     expect(frontendRule?.tags).toEqual(['frontend']);
     // 内容中不应剥离 frontmatter，因为 IDE 规则需要完整上下文
     expect(frontendRule?.content).toContain('tags:');
@@ -91,5 +92,48 @@ This rule has no tags and should be ignored.
     expect(result.stats.matchedTokens).toBeGreaterThan(0);
     const commonRule = result.rules.find(r => r.filename === 'rule-common.md');
     expect(commonRule?.tokens).toBeGreaterThan(20);
+  });
+
+  it('keeps nested rule source paths and generates safe output filenames', async () => {
+    await fs.ensureDir(path.join(TEST_DIR, 'backend'));
+    await fs.writeFile(path.join(TEST_DIR, 'backend', 'rule.md'), `---
+tags:
+  - backend
+---
+# Nested Backend Rule
+`);
+
+    const result = await assembleRules(TEST_DIR, ['backend']);
+    const nestedRule = result.rules.find(r => r.sourcePath === 'backend/rule.md');
+
+    expect(nestedRule?.filename).toBe('backend__rule.md');
+  });
+
+  it('fails when two rules map to the same generated filename', async () => {
+    await fs.ensureDir(path.join(TEST_DIR, 'a'));
+    await fs.writeFile(path.join(TEST_DIR, 'a', 'rule.md'), `---
+tags:
+  - common
+---
+# Nested
+`);
+    await fs.writeFile(path.join(TEST_DIR, 'a__rule.md'), `---
+tags:
+  - common
+---
+# Flat
+`);
+
+    await expect(assembleRules(TEST_DIR, [])).rejects.toThrow('规则输出文件名冲突');
+  });
+
+  it('fails with a clear error when rule tags are not an array', async () => {
+    await fs.writeFile(path.join(TEST_DIR, 'bad-tags.md'), `---
+tags: common
+---
+# Bad Tags
+`);
+
+    await expect(assembleRules(TEST_DIR, [])).rejects.toThrow('bad-tags.md 的 tags 必须是字符串数组');
   });
 });

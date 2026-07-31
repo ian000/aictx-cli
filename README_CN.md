@@ -106,10 +106,48 @@ CLI 会把这些输入自动导入到 `aictx-docs/product`、`aictx-docs/archite
 
 ### 3. 一键同步你的 AI 大脑
 
-拉取并动态注入最新的上下文规范到当前 IDE：
+拉取、组装并动态注入最新的上下文规范到当前 AI 编程工具：
 ```bash
 aictx sync
 ```
+
+`aictx sync` 是让本地 AI 编程工具保持上下文一致的核心命令。它会从当前项目根目录读取 `aictx.json`，把内置 / 本地 / 远程规则同步到 `.aictx-cache`，按 `tags` 过滤 Markdown 规则文件，再把命中的规则写入配置的 AI 工具目录。
+
+最小 `aictx.json` 示例：
+```json
+{
+  "version": "1.0",
+  "repository": "builtin",
+  "ides": ["codex"],
+  "tags": ["backend", "frontend", "common"]
+}
+```
+
+规则文件使用 Markdown + frontmatter tags：
+```md
+---
+tags:
+  - common
+  - backend
+---
+# API Architecture Rules
+```
+
+`repository` 支持三种模式：
+
+- 省略、空字符串或 `builtin`：使用 aictx 内置最佳实践规则。
+- 本地路径，例如 `../aictx-rules`：从本地规则目录复制。
+- Git URL，例如 `git@github.com:your-org/aictx-meta-repo.git`：克隆远程规则快照。
+
+生成目标：
+
+- Codex：`AGENTS.md`、`.agents/workflows/aictx-*.md`、`.agents/skills/*`
+- Claude Code：`CLAUDE.md`、`.claude/rules/aictx-*.md`、`.claude/skills/*`
+- Cursor：`.cursor/rules/aictx-*.mdc`
+- Windsurf：`.windsurf/rules/aictx-*.md`
+- Trae：`.trae/rules/aictx-*.md`
+
+`aictx sync` 只接管这些规则目录中以 `aictx-` 开头的生成文件，不会删除用户自己维护的自定义规则。
 
 ## 🛠️ CLI 命令一览
 
@@ -125,6 +163,28 @@ aictx sync
 | `aictx doctor` | 诊断本地规则漂移与 Token 健康度 | **🪝 钩子静默** (推荐绑定 Git `pre-commit` 钩子) |
 
 > 输入 `aictx <command> --help` 可查看任何命令的详细用法。
+
+## 📝 版本更新
+
+每次发布新的 npm 包前，都需要更新本节，明确说明该版本变更。
+
+### Unreleased
+
+暂无更新。
+
+### v1.6.2 - 2026-08-01
+
+- 强化 `aictx sync`：IDE 规则目录会收敛到最新 tags 过滤结果，不再遗留过期的 `aictx-*` 文件。
+- 规则抓取改为先写入临时目录，成功后再替换 `.aictx-cache`，抓取失败时保留旧缓存。
+- 保留嵌套规则来源路径，并生成更稳定的输出文件名，避免同名规则静默覆盖。
+- 加强 `aictx.json` 校验，覆盖 `ides`、`tags`、`repository`。
+- 补充 README 中 `aictx sync` 的用途、规则格式、仓库模式与生成目录说明。
+
+### v1.6.1
+
+- 修复 Brownfield onboarding 自动执行异步 CLI 命令未正确等待的问题。
+- 初始化流程默认面向 Codex，并按所选 AI 工具生成对应配置目录。
+- 更新内置 `graphify-go` 依赖到修复后的版本，用于 `aictx init --onboard`。
 
 ## 🏗️ 架构愿景 (Roadmap)
 

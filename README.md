@@ -117,10 +117,48 @@ Use `aictx init --no-npm-publish-workflow` when the project is not an npm packag
 
 ### 3. Sync Team Rules
 
-Fetch and inject the latest team context conventions with one click:
+Fetch, assemble, and inject the latest team context conventions with one command:
 ```bash
 aictx sync
 ```
+
+`aictx sync` is the command that keeps your AI coding tool aligned with the project's Context as Code source of truth. It reads `aictx.json` from the current project root, copies built-in/local/remote rules into `.aictx-cache`, filters Markdown rule files by `tags`, then writes the matched rules into the configured AI tool directories.
+
+Minimal `aictx.json` example:
+```json
+{
+  "version": "1.0",
+  "repository": "builtin",
+  "ides": ["codex"],
+  "tags": ["backend", "frontend", "common"]
+}
+```
+
+Rule files are Markdown files with frontmatter tags:
+```md
+---
+tags:
+  - common
+  - backend
+---
+# API Architecture Rules
+```
+
+Repository modes:
+
+- `repository` omitted, empty, or `builtin`: use the built-in aictx best-practice rules.
+- Local path, such as `../aictx-rules`: copy rules from a local directory.
+- Git URL, such as `git@github.com:your-org/aictx-meta-repo.git`: clone a snapshot of the remote rules.
+
+Generated targets:
+
+- Codex: `AGENTS.md`, `.agents/workflows/aictx-*.md`, `.agents/skills/*`
+- Claude Code: `CLAUDE.md`, `.claude/rules/aictx-*.md`, `.claude/skills/*`
+- Cursor: `.cursor/rules/aictx-*.mdc`
+- Windsurf: `.windsurf/rules/aictx-*.md`
+- Trae: `.trae/rules/aictx-*.md`
+
+`aictx sync` only manages files with the `aictx-` prefix in those rule directories. User-owned custom rules without that prefix are preserved.
 
 ## 🛠️ CLI Commands
 
@@ -139,6 +177,28 @@ aictx sync
 | `aictx doctor` | Diagnose local rules drift & token health | **🪝 Hook Silent** (Recommended to bind to Git `pre-commit`) |
 
 > Run `aictx <command> --help` for detailed usage of any command.
+
+## 📝 Version Updates
+
+Every package release should update this section before publishing to npm.
+
+### Unreleased
+
+No changes yet.
+
+### v1.6.2 - 2026-08-01
+
+- Hardened `aictx sync` so generated IDE rule files converge to the latest tag-filtered result instead of leaving stale `aictx-*` files behind.
+- Made rule fetching safer by staging built-in, local, and Git snapshots before replacing `.aictx-cache`, preserving the previous cache when fetch fails.
+- Preserved nested rule source paths and generated collision-resistant output filenames.
+- Added stricter `aictx.json` validation for `ides`, `tags`, and `repository`.
+- Expanded README documentation for `aictx sync` usage, rule format, repository modes, and generated targets.
+
+### v1.6.1
+
+- Fixed Brownfield onboarding command execution so async CLI actions are awaited correctly.
+- Added Codex-first initialization defaults and IDE-specific workspace scaffolding.
+- Updated bundled `graphify-go` dependency to the fixed release used by `aictx init --onboard`.
 
 ## 🏗️ Architecture Roadmap
 

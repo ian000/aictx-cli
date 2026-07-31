@@ -37,20 +37,20 @@ export const syncCommand = (cli: any) => {
         // 2. Assemble
         consola.start('正在动态组装并过滤上下文 (Context Assembler)...');
         const result = await assembleRules(cacheDir, config.tags);
+        const hasMatchedRules = result.rules.length > 0;
         
-        if (result.rules.length === 0) {
+        if (!hasMatchedRules) {
           consola.warn('未找到匹配的规则，可能是 Tags 过滤过严，或者规则仓库为空。');
           console.log('\n💡 ' + pc.yellow('未找到专属业务红线 (No Domain Rules Found)'));
           console.log(pc.gray(`我们发现您当前的 aictx.json 配置了 tags: [${config.tags.join(', ')}]，但在规则仓库中并未匹配到对应的业务架构文档。`));
           console.log('👇 ' + pc.cyan('解决建议：'));
           console.log(`请在您的 AI IDE (如 Trae) 对话框中输入：${pc.green('为当前项目生成新的业务规则脚手架')}`);
           console.log('AI 将自动调用内置的 `aictx-biz-scaffolder` 技能帮您初始化。');
-          return;
+        } else {
+          consola.success(`组装完成: 命中 ${result.stats.matchedRules} 个规则模块`);
         }
 
-        consola.success(`组装完成: 命中 ${result.stats.matchedRules} 个规则模块`);
-
-        if (result.stats.matchedTokens > 12000) {
+        if (hasMatchedRules && result.stats.matchedTokens > 12000) {
           consola.warn(
             pc.yellow(`⚠️ 当前上下文约 ${result.stats.matchedTokens} Tokens，存在 Context Bloat 风险，建议裁剪 Tags！`)
           );
@@ -62,7 +62,7 @@ export const syncCommand = (cli: any) => {
           const adapter = adapters[ide];
           if (adapter) {
             await adapter.inject(cwd, result);
-            consola.success(`已成功注入至 ${ide} 环境。`);
+            consola.success(`已成功同步至 ${ide} 环境。`);
           } else {
             consola.warn(`未找到对应 ${ide} 的注入适配器。`);
           }
@@ -75,6 +75,10 @@ export const syncCommand = (cli: any) => {
         // 我们将是否包含 domain rule 的状态写入到一个临时文件里，供外层 onboard 读取
         const statusPath = path.resolve(cwd, '.aictx-sync-status.json');
         await fs.writeJson(statusPath, { hasDomainRules, projectName });
+
+        if (!hasMatchedRules) {
+          return;
+        }
 
         // 4. Value Dashboard (Value Perception)
         console.log('\n======================================================================');

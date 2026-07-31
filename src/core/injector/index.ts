@@ -15,6 +15,14 @@ export function getIdeRuleTargetPath(cwd: string, ide: SupportedIde, filename: s
   return path.join(cwd, '.trae', 'rules', `aictx-${safeFilename}`);
 }
 
+export function getIdeRuleDir(cwd: string, ide: SupportedIde): string {
+  if (ide === 'codex') return path.join(cwd, '.agents', 'workflows');
+  if (ide === 'claude') return path.join(cwd, '.claude', 'rules');
+  if (ide === 'cursor') return path.join(cwd, '.cursor', 'rules');
+  if (ide === 'windsurf') return path.join(cwd, '.windsurf', 'rules');
+  return path.join(cwd, '.trae', 'rules');
+}
+
 export function renderRuleForIde(ide: SupportedIde, filename: string, content: string): string {
   if (ide !== 'cursor') return content;
   const baseName = path.basename(filename, path.extname(filename));
@@ -29,12 +37,26 @@ export abstract class IdeAdapter {
     await fs.writeFile(targetPath, content, 'utf-8');
   }
 
-  // 默认情况下不再粗暴清空整个目录，因为可能会误删用户原有的自定义规则
-  // 相反，我们只追踪并覆盖 aictx 生成的文件
+  protected async reconcileGeneratedRules(cwd: string, ide: SupportedIde, result: AssembleResult): Promise<void> {
+    const ruleDir = getIdeRuleDir(cwd, ide);
+    await fs.ensureDir(ruleDir);
+
+    const expected = new Set(result.rules.map((rule) => getIdeRuleTargetPath(cwd, ide, rule.filename)));
+    const existing = await fs.readdir(ruleDir);
+    for (const entry of existing) {
+      if (!entry.startsWith('aictx-')) continue;
+      const targetPath = path.join(ruleDir, entry);
+      const stat = await fs.stat(targetPath);
+      if (stat.isFile() && !expected.has(targetPath)) {
+        await fs.remove(targetPath);
+      }
+    }
+  }
 }
 
 export class TraeAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
+    await this.reconcileGeneratedRules(cwd, 'trae', result);
     for (const rule of result.rules) {
       const targetPath = getIdeRuleTargetPath(cwd, 'trae', rule.filename);
       await this.writeRule(targetPath, renderRuleForIde('trae', rule.filename, rule.content));
@@ -44,6 +66,7 @@ export class TraeAdapter extends IdeAdapter {
 
 export class CursorAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
+    await this.reconcileGeneratedRules(cwd, 'cursor', result);
     for (const rule of result.rules) {
       const targetPath = getIdeRuleTargetPath(cwd, 'cursor', rule.filename);
       await this.writeRule(targetPath, renderRuleForIde('cursor', rule.filename, rule.content));
@@ -53,6 +76,7 @@ export class CursorAdapter extends IdeAdapter {
 
 export class ClaudeAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
+    await this.reconcileGeneratedRules(cwd, 'claude', result);
     for (const rule of result.rules) {
       const targetPath = getIdeRuleTargetPath(cwd, 'claude', rule.filename);
       await this.writeRule(targetPath, renderRuleForIde('claude', rule.filename, rule.content));
@@ -62,6 +86,7 @@ export class ClaudeAdapter extends IdeAdapter {
 
 export class WindsurfAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
+    await this.reconcileGeneratedRules(cwd, 'windsurf', result);
     for (const rule of result.rules) {
       const targetPath = getIdeRuleTargetPath(cwd, 'windsurf', rule.filename);
       await this.writeRule(targetPath, renderRuleForIde('windsurf', rule.filename, rule.content));
@@ -72,6 +97,7 @@ export class WindsurfAdapter extends IdeAdapter {
 export class CodexAdapter extends IdeAdapter {
   async inject(cwd: string, result: AssembleResult): Promise<void> {
     await ensureCodexWorkspace(cwd);
+    await this.reconcileGeneratedRules(cwd, 'codex', result);
 
     for (const rule of result.rules) {
       const targetPath = getIdeRuleTargetPath(cwd, 'codex', rule.filename);
