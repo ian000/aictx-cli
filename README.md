@@ -339,6 +339,12 @@ Every package release should update this section before publishing to npm.
 
 No changes yet.
 
+### v2.0.3 - 2026-08-06
+
+- Added optional `aictx route --ai-fallback`, which asks the local Codex CLI to review empty, weak, or tied local route results in a read-only sandbox.
+- Missing, unauthenticated, timed-out, or failed Codex CLI runs now degrade cleanly to local MOC routing without breaking the command.
+- `--ai-fallback` is off by default. When enabled, Codex may use its configured online model to process MOC metadata and read candidate documents; use it only for projects whose documentation may be sent to that model provider.
+
 ### v2.0.2 - 2026-08-06
 
 - Fixed `aictx route` failing to match natural-language questions against business concepts found in document content.
