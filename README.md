@@ -339,6 +339,12 @@ Every package release should update this section before publishing to npm.
 
 No changes yet.
 
+### v2.0.2 - 2026-08-06
+
+- Fixed `aictx route` failing to match natural-language questions against business concepts found in document content.
+- Added Chinese phrase and English word matching; content-only candidates require at least two meaningful matches to reduce false positives.
+- Applied the same relevance rules to Agent Runtime Context Bundle document selection.
+
 ### v2.0.1 - 2026-08-06
 
 - Fixed `spawn graphify-go ENOENT` when graph commands are run from a global `aictx-cli` installation.

@@ -1,6 +1,7 @@
 import type { ContextBundle, ContextDocument, ContextFreshness, ContextPacket, ContextRule } from './contracts.js';
 import { CONTEXT_SCHEMA_VERSION } from './contracts.js';
 import { stableHash } from './hash.js';
+import { findSharedSearchTerms } from './search.js';
 
 export interface PrepareContextOptions {
   task: string;
@@ -15,7 +16,6 @@ function normalize(value: string): string {
 
 function documentScore(task: string, document: ContextDocument): number {
   const query = normalize(task);
-  const words = query.split(/[\s,，。；;:：/\\()[\]{}"'`]+/).filter(word => word.length >= 2);
   let score = 0;
 
   const weightedTerms: Array<[string[], number]> = [
@@ -32,32 +32,30 @@ function documentScore(task: string, document: ContextDocument): number {
     }
   }
 
-  const haystack = normalize([
+  const metadata = [
     document.path,
     document.title,
     document.description,
     ...document.tags,
     ...document.entities,
     ...document.aliases
-  ].join(' '));
-  for (const word of new Set(words)) {
-    if (haystack.includes(word)) score += 1;
-  }
+  ].join(' ');
+  score += findSharedSearchTerms(task, metadata).length;
+
+  const contentTerms = findSharedSearchTerms(task, document.content);
+  if (contentTerms.length >= 2) score += contentTerms.length;
 
   return score;
 }
 
 function ruleScore(task: string, rule: ContextRule): number {
   const query = normalize(task);
-  const words = query.split(/[\s,，。；;:：/\\()[\]{}"'`]+/).filter(word => word.length >= 2);
   let score = 0;
   for (const tag of rule.tags) {
     if (tag && query.includes(normalize(tag))) score += 5;
   }
-  const metadata = normalize([rule.id, rule.sourcePath, rule.description ?? '', ...rule.tags].join(' '));
-  for (const word of new Set(words)) {
-    if (metadata.includes(word)) score += 2;
-  }
+  const metadata = [rule.id, rule.sourcePath, rule.description ?? '', ...rule.tags].join(' ');
+  score += findSharedSearchTerms(task, metadata).length * 2;
   return score;
 }
 

@@ -1,6 +1,7 @@
 export * from './contracts.js';
 export * from './hash.js';
 export * from './select.js';
+export * from './search.js';
 export * from './token.js';
 
 export { assembleRules } from '../core/assembler/index.js';

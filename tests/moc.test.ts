@@ -82,6 +82,25 @@ aliases:
     expect(matches[0].matchedTerms).toEqual(expect.arrayContaining(['Order', 'Checkout']));
   });
 
+  it('routes a natural-language Chinese question from document content', async () => {
+    await fs.appendFile(
+      path.join(productDir, 'order-flow.md'),
+      '\n教师提交用车需求后，询价员会选择供应商。\n'
+    );
+
+    const documents = await buildMocRouteIndex(docsRoot);
+    const matches = rankMocDocuments('用车需求提交是怎么工作的？', documents);
+
+    expect(matches[0].document.relativePath).toBe('product/order-flow.md');
+    expect(matches[0].matchedTerms).toEqual(expect.arrayContaining(['用车', '需求', '提交']));
+  });
+
+  it('does not route from a single generic content term', async () => {
+    const documents = await buildMocRouteIndex(docsRoot);
+
+    expect(rankMocDocuments('这个流程是怎么工作的？', documents)).toEqual([]);
+  });
+
   it('discovers MOC index templates by anchor', async () => {
     await fs.writeFile(path.join(docsRoot, 'README.md'), '# Plain readme\n');
 

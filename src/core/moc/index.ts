@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
+import { findSharedSearchTerms } from '../../context/search.js';
 
 export const MOC_INDEX_START = '<!-- aictx-index-start -->';
 export const MOC_INDEX_END = '<!-- aictx-index-end -->';
@@ -16,6 +17,7 @@ export interface MocDocument {
   tags: string[];
   entities: string[];
   aliases: string[];
+  searchText: string;
   updated: string;
   sourceIndexPath: string;
 }
@@ -135,6 +137,7 @@ export async function parseMocDocument(
     tags: flattenStrings(data.tags),
     entities: flattenStrings(data.entities),
     aliases: flattenStrings(data.aliases),
+    searchText: parsed.content,
     updated: stat.mtime.toISOString().slice(0, 10),
     sourceIndexPath
   };
@@ -228,7 +231,6 @@ function addScore(
 
 export function rankMocDocuments(question: string, documents: MocDocument[]): MocRouteMatch[] {
   const query = normalizeText(question);
-  const words = query.split(/[\s,，。；;:：/\\()[\]{}"'`]+/).filter(word => word.length >= 2);
 
   return documents
     .map((document) => {
@@ -239,17 +241,22 @@ export function rankMocDocuments(question: string, documents: MocDocument[]): Mo
       addScore(query, [document.title, document.linkLabel, stripMarkdownExtension(document.relativePath)], 4, matched);
       addScore(query, [document.description], 2, matched);
 
-      for (const word of words) {
-        const haystack = normalizeText([
-          document.relativePath,
-          document.title,
-          document.description,
-          ...document.tags,
-          ...document.entities,
-          ...document.aliases
-        ].join(' '));
-        if (haystack.includes(word)) {
-          matched.set(word, Math.max(matched.get(word) || 0, 1));
+      const metadata = [
+        document.relativePath,
+        document.title,
+        document.description,
+        ...document.tags,
+        ...document.entities,
+        ...document.aliases
+      ].join(' ');
+      for (const term of findSharedSearchTerms(question, metadata)) {
+        matched.set(term, Math.max(matched.get(term) || 0, 1));
+      }
+
+      const contentTerms = findSharedSearchTerms(question, document.searchText);
+      if (contentTerms.length >= 2) {
+        for (const term of contentTerms) {
+          matched.set(term, Math.max(matched.get(term) || 0, 1));
         }
       }
 

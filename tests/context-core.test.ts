@@ -75,6 +75,22 @@ describe('shared context core', () => {
     expect(packet.provenance).toContain('.aictx-cache/common.md');
   });
 
+  it('selects a document from natural-language terms found in its content', () => {
+    const value = bundle();
+    value.documents[0].content = '# 用车流程\n\n教师提交用车需求后进入询价。';
+
+    const packet = prepareContextFromBundle(value, {
+      task: '用车需求提交是怎么工作的？',
+      budget: 55,
+      documentLimit: 2,
+      freshness: fresh
+    });
+
+    expect(packet.documents.map(document => document.path)).toEqual([
+      'aictx-docs/product/checkout.md'
+    ]);
+  });
+
   it('selects optional rules only when the task matches and budget allows them', () => {
     const value = bundle();
     value.rules.push({

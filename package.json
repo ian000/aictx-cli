@@ -1,6 +1,6 @@
 {
   "name": "aictx-cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Context as Code infrastructure for AI-assisted engineering and agent runtime",
   "type": "module",
   "bin": {
