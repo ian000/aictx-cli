@@ -331,6 +331,12 @@ Runtime 只读检查上下文来源，除了写入 `.aictx/runs/` 记录外，�
 
 暂无更新。
 
+### v2.0.1 - 2026-08-06
+
+- 修复全局安装 `aictx-cli` 后执行图谱命令可能出现 `spawn graphify-go ENOENT` 的问题。
+- `aictx` 现在直接解析并启动自身依赖中的 `graphify-go` 入口，不再依赖传递依赖的命令是否暴露到全局 PATH。
+- 新增 PATH 中不存在 `graphify-go` 时的图谱生成回归测试。
+
 ### v2.0.0 - 2026-08-01
 
 - 明确拆分 Shared Context Core、Development Plane、Runtime Plane 三层职责，并固化单向依赖边界。

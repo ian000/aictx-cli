@@ -339,6 +339,12 @@ Every package release should update this section before publishing to npm.
 
 No changes yet.
 
+### v2.0.1 - 2026-08-06
+
+- Fixed `spawn graphify-go ENOENT` when graph commands are run from a global `aictx-cli` installation.
+- `aictx` now resolves and launches the `graphify-go` entry from its own dependency tree instead of relying on a transitive binary being exposed on the global PATH.
+- Added a regression test that generates a graph with `graphify-go` absent from PATH.
+
 ### v2.0.0 - 2026-08-01
 
 - Added three explicit architecture layers: Shared Context Core, Development Plane, and Runtime Plane, with one-way dependency rules.

@@ -1,15 +1,33 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
+import { createRequire } from 'node:module';
 import { execa } from 'execa';
+
+const dependencyRequire = createRequire(import.meta.url);
+
+export function resolveGraphifyCliPath(): string {
+  try {
+    return dependencyRequire.resolve('graphify-go/cli.js');
+  } catch {
+    throw new Error('无法解析 aictx-cli 内置的 graphify-go 入口，请重新安装 aictx-cli。');
+  }
+}
+
+interface RunGraphifyOptions {
+  cwd?: string;
+  stdio?: 'inherit' | 'pipe';
+  env?: NodeJS.ProcessEnv;
+}
 
 export async function runGraphify(
   args: string[],
-  options: { cwd?: string; stdio?: 'inherit' | 'pipe' } = {}
+  options: RunGraphifyOptions = {}
 ) {
-  return execa('graphify-go', args, {
+  const cliPath = resolveGraphifyCliPath();
+  return execa(process.execPath, [cliPath, ...args], {
     cwd: options.cwd,
-    preferLocal: true,
+    env: options.env,
     stdio: options.stdio ?? 'inherit'
   });
 }
@@ -17,7 +35,7 @@ export async function runGraphify(
 export async function analyzeWithGraphify(
   dir: string,
   outDir: string,
-  options: { cwd?: string; stdio?: 'inherit' | 'pipe' } = {}
+  options: RunGraphifyOptions = {}
 ) {
   return runGraphify(['-dir', dir, '-out', outDir], options);
 }
